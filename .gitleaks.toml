@@ -1,0 +1,29 @@
+[allowlist]
+  description = "Global Allowlist"
+
+  # Ignore based on any subset of the file path
+  paths = [
+    # Ignore all example certs
+    '''\/example.*\.pem$''',
+                
+    # Ignore anything with the word funkymonkey anywhere in the path
+    '''funkymonkey''',
+
+    # Ignore some long path
+    '''examples\/some\/long\/path\/server.key$''',
+
+    # The example htpasswd file was a false positive, this is not a leak.
+    '''\/files/htpasswd$'''
+  ]
+        
+  # Ignore based on any subset of the line
+  regexes = [
+    # Ignore lines containing pickles
+    '''pickles''',
+
+    # Ignore this hash which is the literal string 'admin'
+    '''2y$05$yUBN/Rrih.94WhcsQZX9K.PVZqB9.GEnu05vpthGjmyEKBHrLZdE6''',
+
+    # Ignore this hash which is the literal string 'root'
+    '''$6$Fs98gLDtlWMeaIxC$igSDR2hoAFL1t4khnM0PtS5TN9odDumtsQ2jr8XtdEBfSBpNhKzp.tqohOi7teIPk6yl9s8B29ol9AOF7jFI3/'''
+  ]
