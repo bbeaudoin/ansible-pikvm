@@ -1,0 +1,57 @@
+# Definitely a work in progress. Quick and dirty playbook for PiKVM setup.
+---
+- name: Configure PiKVM
+  hosts: pikvm
+  gather_facts: no
+
+  tasks:
+
+  # If the disk is not read-write, changes will fail
+  - name: Remount root read-write
+    ansible.builtin.command: rw
+
+  # Use 
+  - name: Set the root password
+    ansible.builtin.user: 
+      name: root
+      password: "{{ root_crypt }}"
+
+  # Replace the htpasswd file with file contents.
+  - name: Set the htpasswd file for PiKVM
+    ansible.builtin.copy:
+      src: htpasswd
+      dest: /etc/kvmd/htpasswd
+
+  # I've got both TESMart and EZCoo. This isn't smart yet.
+  - name: Place /etc/kvmd/override.yaml
+    ansible.builtin.copy:
+      src: "{{ override_file }}"
+      dest: /etc/kvmd/override.yaml
+
+  # The defaule uses de3 (Germany) which may not perform well in the U.S.
+  - name: Use a pre-generated mirrorlist
+    ansible.builtin.copy:
+      src: mirrorlist
+      dest: /etc/pacman.d/mirrorlist
+
+  # Updates PiKVM -- Not guaranteed to be safe for your configuration
+  - name: Install the latest available updates
+    community.general.pacman:
+      upgrade: true
+      update_cache: true
+
+  # This permits use of SNMP commands and SNMP traps
+  - name: Ensure net-snmp is installed
+    community.general.pacman:
+      name: net-snmp
+      state: latest
+
+  # This makes it easier to send SNMP commands to a power strip
+  - name: Install the CyberPower MIB for CyberPower ATS and PDU support
+    ansible.builtin.copy:
+      src: CyberPower_MIB_v2.11.MIB
+      dest: /usr/share/snmp/mibs/
+
+  # If / is not read-only, power failure may cause microSD corruption
+  - name: Remount root read-only for safety
+    ansible.builtin.command: ro

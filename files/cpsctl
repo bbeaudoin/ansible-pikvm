@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Include the CyberPower MIB and export for subcommands
+export MIBS=+CPS-MIB
+
+# Protocol and authentication information
+SNMP_VERSION=1
+SNMP_COMMUNITY=<read-write community>
+TARGET_IP=<IP of ATS or PDU>
+
+# Build the common options string for snmp
+OPTIONS="-v${SNMP_VERSION} -c${SNMP_COMMUNITY} ${TARGET_IP}"
+
+# Function that turns the outlet off immediately
+function setOutletOff {
+  snmpset ${OPTIONS} atsOutletCtrlCommand.$1 i immediateOff
+}
+
+# Function that turns the outlet on immediately
+function setOutletOn {
+  snmpset ${OPTIONS} atsOutletCtrlCommand.$1 i immediateOn
+}
+
+# Function that returns the outlet state
+function getOutletState {
+  snmpget ${OPTIONS} atsOutletStatusOutletState.$1
+}
+
+# Basic switch case for on/off/state
+case $1 in
+  on) setOutletOn $2;
+    ;;
+  off) setOutletOff $2;
+    ;;
+  state) getOutletState $2;
+    ;;
+  *)
+    echo "Usage: power [on|off|state] [port#]"
+    ;;
+esac

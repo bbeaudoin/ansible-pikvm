@@ -1,0 +1,98 @@
+####################################################################
+#                                                                  #
+# Override Pi-KVM system settings. This file uses the YAML syntax. #
+#                                                                  #
+#    https://github.com/pikvm/pikvm/blob/master/pages/config.md    #
+#                                                                  #
+# All overridden parameters will be applied AFTER other configs    #
+# and "!include" directives and BEFORE validation.                 #
+# Not: Sections should be combined under shared keys.              #
+#                                                                  #
+####################################################################
+#
+#########
+# Wrong #
+#########
+#kvmd:
+#    gpio:
+#        drivers: ...
+#kvmd:
+#    gpio:
+#        scheme: ...
+#
+###########
+# Correct #
+###########
+#kvmd:
+#    gpio:
+#        drivers: ...
+#        scheme: ...
+#
+###########
+# Example #
+###########
+#vnc:
+#    # See https://github.com/pikvm/pikvm/blob/master/pages/vnc.md
+#    keymap: /usr/share/kvmd/keymaps/ru # Set russian keymap
+#    auth:
+#        vncauth:
+#            enabled: true # Enable auth via /etc/kvmd/vncpasswd
+#otg:
+#    devices:
+#      ethernet:
+#        enabled: true
+#kvmd:
+#    streamer:
+#        cmd_append:
+#            - "--h264-sink=kvmd::ustreamer::h264"
+
+kvmd:
+    gpio:
+        drivers:
+            ez:
+                type: ezcoo
+                protocol: 2
+                device: /dev/ttyUSB0
+        scheme:
+            ch0_led:
+                driver: ez
+                pin: 0
+                mode: input
+            ch1_led:
+                driver: ez
+                pin: 1
+                mode: input
+            ch2_led:
+                driver: ez
+                pin: 2
+                mode: input
+            ch3_led:
+                driver: ez
+                pin: 3
+                mode: input
+            ch0_button:
+                driver: ez
+                pin: 0
+                mode: output
+                switch: false
+            ch1_button:
+                driver: ez
+                pin: 1
+                mode: output
+                switch: false
+            ch2_button:
+                driver: ez
+                pin: 2
+                mode: output
+                switch: false
+            ch3_button:
+                driver: ez
+                pin: 3
+                mode: output
+                switch: false
+        view:
+            table:
+                - ["#Input 1", ch0_led, ch0_button]
+                - ["#Input 2", ch1_led, ch1_button]
+                - ["#Input 3", ch2_led, ch2_button]
+                - ["#Input 4", ch3_led, ch3_button]
