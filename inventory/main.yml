@@ -9,7 +9,7 @@ all:
       ansible_host: 10.0.0.51
       override_file: override_ezcoo.yaml
     pikvm4:
-      ansible_host: 10.0.2.18
+      ansible_host: 10.0.0.219
     pikvm5:
       ansible_host: 10.0.0.19
   vars:
