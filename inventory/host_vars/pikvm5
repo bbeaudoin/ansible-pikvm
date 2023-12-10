@@ -1,0 +1,3 @@
+---
+# Overrides specific to pikvm5
+ansible_host: 10.0.0.19

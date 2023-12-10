@@ -3,29 +3,7 @@
 all:
   hosts:
     pikvm1:
-      override_file: override_tesmart.yaml
     pikvm2:
     pikvm3:
-      ansible_host: 10.0.0.51
-      override_file: override_ezcoo.yaml
     pikvm4:
-      ansible_host: 10.0.0.219
     pikvm5:
-      ansible_host: 10.0.0.19
-  vars:
-    # Defaults specific to Ansible and PiKVM
-    ansible_user: root
-    ansible_become: false
-    ansible_remote_tmp: "/tmp/"
-    ansible_python_interpreter: "/usr/bin/python3"
-    ansible_deprecation_warnings: false
-
-    # The default static override to use from files
-    override_file: override.yaml
-
-    # Future: Extend this for other users, using these variables for notes.
-    cert_paths:
-      - "/etc/kvmd/nginx/ssl/server.crt"
-      - "/etc/kvmd/vnc/ssl/server.crt"
-    msd_files:
-      - "https://fw-download-alias1.raspberrypi.com/net_install/boot.img"

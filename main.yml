@@ -21,20 +21,18 @@
     community.general.pacman:
       name: "{{ item }}"
       state: latest
-    with_items:
-      - net-snmp
-      - rpi4-eeprom
+    with_items: "{{ package_list | default([]) }}"
 
   - name: Generate or set root password from files/password-root
     ansible.builtin.user:
       name: root
-      password: "{{ lookup('ansible.builtin.password', 'files/password-root', chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
+      password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
 
   - name: Generate or set kvmd admin password from files/password-admin
     ansible.builtin.lineinfile:
       path: /etc/kvmd/htpasswd
       regexp: '^admin:'
-      line: "admin:{{ lookup('ansible.builtin.password', 'files/password-admin', chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
+      line: "admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
 
   - name: Install preferred override.yaml set in inventory from files/
     ansible.builtin.copy:

@@ -1,0 +1,6 @@
+---
+# Overrides specific to pikvm1
+override_file: override_tesmart.yaml
+package_list:
+  - rpi4-eeprom
+  - net-snmp

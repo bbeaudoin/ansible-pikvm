@@ -1,0 +1,4 @@
+---
+# Overrides specific to pikvm3
+ansible_host: 10.0.0.51
+override_file: override_ezcoo.yaml
