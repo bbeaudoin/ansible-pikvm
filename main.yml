@@ -7,6 +7,9 @@
   - name: Remount root read-write to prepare the SD card for changes
     ansible.builtin.command: rw
 
+  - name: Set PiKVM for the host (or host group's) specified timezone
+    ansible.builtin.command: timedatectl set-timezone "{{ timezone }}"
+
   - name: Deploy the site-preferred mirrorlist from files/
     ansible.builtin.copy:
       src: mirrorlist
