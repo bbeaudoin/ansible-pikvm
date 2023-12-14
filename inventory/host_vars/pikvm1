@@ -1,5 +1,6 @@
 ---
 # Overrides specific to pikvm1
+hostname: pikvm1.openhappens.org
 override_file: override_tesmart.yaml
 package_list:
   - rpi4-eeprom

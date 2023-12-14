@@ -1,51 +1,67 @@
 # Definitely a work in progress. Quick and dirty playbook for PiKVM setup.
 ---
 - name: Configure PiKVM
-  hosts: all
+  hosts: "{{ hosts | default('all') }}"
   gather_facts: no
-  tasks:
+
+  pre_tasks:
   - name: Remount root read-write to prepare the SD card for changes
     ansible.builtin.command: rw
 
-  - name: Set PiKVM for the host (or host group's) specified timezone
-    ansible.builtin.command: timedatectl set-timezone "{{ timezone }}"
+  tasks:
+  - name: Attempt to configure PiKVM but always set SD card back to read-only
+    block:
+    - name: Set PiKVM hostname for the host. Default is pikvm.
+      ansible.builtin.hostname:
+        name: "{{ hostname | default(inventory_hostname) }}"
+      register: reboot_required
 
-  - name: Deploy the site-preferred mirrorlist from files/
-    ansible.builtin.copy:
-      src: mirrorlist
-      dest: /etc/pacman.d/mirrorlist
+    - name: Set PiKVM for the specified timezone
+      community.general.timezone:
+        name: "{{ timezone }}"
 
-  - name: Refresh the package cache and install available updates
-    community.general.pacman:
-      upgrade: true
-      update_cache: true
+    - name: Deploy the site-preferred mirrorlist from files/
+      ansible.builtin.copy:
+        src: mirrorlist
+        dest: /etc/pacman.d/mirrorlist
 
-  - name: Install additional packages from a list of desired packages
-    community.general.pacman:
-      name: "{{ item }}"
-      state: latest
-    with_items: "{{ package_list | default([]) }}"
+    - name: Refresh the package cache and install available updates
+      community.general.pacman:
+        upgrade: true
+        update_cache: true
+      register: reboot_required
 
-  - name: Generate or set root password from files/password-root
-    ansible.builtin.user:
-      name: root
-      password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
+    - name: Install additional packages from a list of desired packages
+      community.general.pacman:
+        name: "{{ item }}"
+        state: latest
+      with_items: "{{ package_list | default([]) }}"
 
-  - name: Generate or set kvmd admin password from files/password-admin
-    ansible.builtin.lineinfile:
-      path: /etc/kvmd/htpasswd
-      regexp: '^admin:'
-      line: "admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
+    - name: Generate or set root password from files/password-root
+      ansible.builtin.user:
+        name: root
+        password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
 
-  - name: Install preferred override.yaml set in inventory from files/
-    ansible.builtin.copy:
-      src: "{{ override_file }}"
-      dest: /etc/kvmd/override.yaml
+    - name: Generate or set kvmd admin password from files/password-admin
+      ansible.builtin.lineinfile:
+        path: /etc/kvmd/htpasswd
+        regexp: '^admin:'
+        line: "admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
 
-  - name: Install the CyberPower MIB for CyberPower ATS and PDU support
-    ansible.builtin.copy:
-      src: CyberPower_MIB_v2.11.MIB
-      dest: /usr/share/snmp/mibs/
+    - name: Install preferred override.yaml set in inventory from files/
+      ansible.builtin.copy:
+        src: "{{ override_file }}"
+        dest: /etc/kvmd/override.yaml
 
-  - name: Remount root read-only to protect the SD card
-    ansible.builtin.command: ro
+    - name: Install the CyberPower MIB for CyberPower ATS and PDU support
+      ansible.builtin.copy:
+        src: CyberPower_MIB_v2.11.MIB
+        dest: /usr/share/snmp/mibs/
+
+    - name: "Reboot {{ hostname | default(inventory_hostname) }}"
+      ansible.builtin.reboot:
+      when:
+        - reboot_required.changed
+    always:
+    - name: Remount root read-only to protect the SD card
+      ansible.builtin.command: ro

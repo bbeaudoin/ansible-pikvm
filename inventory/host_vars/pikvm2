@@ -1,2 +1,3 @@
 ---
 # Overrides specific to pikvm2
+hostname: pikvm2.openhappens.org
