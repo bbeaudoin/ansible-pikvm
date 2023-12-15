@@ -49,11 +49,31 @@
 kvmd:
     gpio:
         drivers:
+            # ezcoo KVM Switch Driver
             ez:
                 type: ezcoo
                 protocol: 2
                 device: /dev/ttyUSB0
+
+            # Wake on Lan (WoL) Driver
+            wol_server0:
+                type: wol
+                mac: 7c:10:c9:b8:ee:13
+            wol_server1:
+                type: wol
+                mac: f0:2f:74:c3:78:26
+
+            # Commands to reboot or restart kvmd
+            pikvm_reboot:
+                type: cmd
+                cmd: [/usr/bin/sudo, reboot]
+
+            pikvm_restart_kvmd:
+                type: cmd
+                cmd: [/usr/bin/sudo, systemctl, restart, kvmd]
+
         scheme:
+            # Indicators for active KVM switch inputs/outputs
             ch0_led:
                 driver: ez
                 pin: 0
@@ -70,6 +90,8 @@ kvmd:
                 driver: ez
                 pin: 3
                 mode: input
+
+            # Control button definitions for KVM switch
             ch0_button:
                 driver: ez
                 pin: 0
@@ -90,9 +112,40 @@ kvmd:
                 pin: 3
                 mode: output
                 switch: false
+
+            # Buttons for WoL
+            wol_server0:
+                driver: wol_server0
+                pin: 0
+                mode: output
+                switch: false
+            wol_server1:
+                driver: wol_server1
+                pin: 0
+                mode: output
+                switch: false
+
+            # Definitions for PiKVM LED, reboot, and restart buttons
+            pikvm_led:
+                pin: 0
+                mode: input
+
+            pikvm_reboot:
+                driver: pikvm_reboot
+                pin: 0
+                mode: output
+                switch: false
+
+            pikvm_restart_kvmd:
+                driver: pikvm_restart_kvmd
+                pin: 0
+                mode: output
+                switch: false
         view:
+            # Table that will be shown when GPIO menu is opened
             table:
-                - ["#Input 1", ch0_led, ch0_button]
-                - ["#Input 2", ch1_led, ch1_button]
-                - ["#Input 3", ch2_led, ch2_button]
-                - ["#Input 4", ch3_led, ch3_button]
+                - ["#Asus MiniPC (1)", ch0_led, ch0_button, "wol_server0 | WoL"]
+                - ["#Asus MiniPC (2)", ch1_led, ch1_button, "wol_server1 | WoL"]
+                - ["#PiKVM", ch2_led, ch2_button]
+                - ["#Spare", ch3_led, ch3_button]
+                - ["#PiKVM", "pikvm_led|green", "pikvm_restart_kvmd|confirm|Restart kvmd", "pikvm_reboot|confirm|Reboot PiKVM"]

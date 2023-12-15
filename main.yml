@@ -5,63 +5,74 @@
   gather_facts: no
 
   pre_tasks:
-  - name: Remount root read-write to prepare the SD card for changes
-    ansible.builtin.command: rw
+    - name: Remount root read-write to prepare the SD card for changes
+      ansible.builtin.command: rw
+      register: read_write
 
   tasks:
-  - name: Attempt to configure PiKVM but always set SD card back to read-only
-    block:
-    - name: Set PiKVM hostname for the host. Default is pikvm.
-      ansible.builtin.hostname:
-        name: "{{ hostname | default(inventory_hostname) }}"
-      register: reboot_required
+    - name: Attempt to configure PiKVM but always set SD card back to read-only
+      block:
+        - name: Set PiKVM hostname for the host. Default is pikvm.
+          ansible.builtin.hostname:
+            name: "{{ hostname | default(inventory_hostname) }}"
+          register: reboot_required
 
-    - name: Set PiKVM for the specified timezone
-      community.general.timezone:
-        name: "{{ timezone }}"
+        - name: Set PiKVM for the specified timezone
+          community.general.timezone:
+            name: "{{ timezone }}"
 
-    - name: Deploy the site-preferred mirrorlist from files/
-      ansible.builtin.copy:
-        src: mirrorlist
-        dest: /etc/pacman.d/mirrorlist
+        - name: Copy the appropriate mirrorlist to the PiKVM
+          ansible.builtin.copy:
+            src: mirrorlist
+            dest: /etc/pacman.d/mirrorlist
 
-    - name: Refresh the package cache and install available updates
-      community.general.pacman:
-        upgrade: true
-        update_cache: true
-      register: reboot_required
+        - name: Refresh the package cache and install available updates
+          community.general.pacman:
+            upgrade: true
+            update_cache: true
+          register: reboot_required
+          notify:
+            - Reboot PiKVM
 
-    - name: Install additional packages from a list of desired packages
-      community.general.pacman:
-        name: "{{ item }}"
-        state: latest
-      with_items: "{{ package_list | default([]) }}"
+        - name: Install additional packages from a list of desired packages
+          community.general.pacman:
+            name: "{{ item }}"
+            state: latest
+          with_items: "{{ package_list | default([]) }}"
 
-    - name: Generate or set root password from files/password-root
-      ansible.builtin.user:
-        name: root
-        password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
+        - name: Generate or set root password from files/password-root
+          ansible.builtin.user:
+            name: root
+            password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
 
-    - name: Generate or set kvmd admin password from files/password-admin
-      ansible.builtin.lineinfile:
-        path: /etc/kvmd/htpasswd
-        regexp: '^admin:'
-        line: "admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
+        - name: Generate or set kvmd admin password from files/password-admin
+          ansible.builtin.lineinfile:
+            path: /etc/kvmd/htpasswd
+            regexp: '^admin:'
+            line: "admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
 
-    - name: Install preferred override.yaml set in inventory from files/
-      ansible.builtin.copy:
-        src: "{{ override_file }}"
-        dest: /etc/kvmd/override.yaml
+        - name: Install preferred override.yaml set in inventory from files/
+          ansible.builtin.copy:
+            src: "{{ override_file }}"
+            dest: /etc/kvmd/override.yaml
+          notify:
+            - Restart kvmd
 
-    - name: Install the CyberPower MIB for CyberPower ATS and PDU support
-      ansible.builtin.copy:
-        src: CyberPower_MIB_v2.11.MIB
-        dest: /usr/share/snmp/mibs/
+        - name: Install the CyberPower MIB for CyberPower ATS and PDU support
+          ansible.builtin.copy:
+            src: CyberPower_MIB_v2.11.MIB
+            dest: /usr/share/snmp/mibs/
 
-    - name: "Reboot {{ hostname | default(inventory_hostname) }}"
+      # Always remount PiKVM read-only to protect the SD card
+      always:
+        - name: Remount Read-Only
+          ansible.builtin.command: ro
+
+  handlers:
+    - name: Restart kvmd
+      ansible.builtin.systemd:
+        name: kvmd
+        state: restarted
+
+    - name: Reboot PiKVM
       ansible.builtin.reboot:
-      when:
-        - reboot_required.changed
-    always:
-    - name: Remount root read-only to protect the SD card
-      ansible.builtin.command: ro
