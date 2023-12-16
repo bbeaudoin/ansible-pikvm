@@ -43,7 +43,7 @@
 
         - name: Ensure kvmd is allowed to restart or reboot itself
           ansible.builtin.copy:
-            content: "kvmd ALL=(root) NOPASSWD: /usr/bin/reboot, /usr/bin/systemctl restart kvmd"
+            content: "kvmd ALL=(root) NOPASSWD: /usr/bin/reboot, /usr/bin/poweroff, /usr/bin/systemctl restart kvmd"
             dest: /etc/sudoers.d/ansible-kvmd
             mode: "u=rw,g=r"
 

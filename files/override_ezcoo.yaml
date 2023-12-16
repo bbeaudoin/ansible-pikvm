@@ -56,13 +56,16 @@ kvmd:
         type: wol
         mac: f0:2f:74:c3:78:26
 
-      # Commands to reboot or restart kvmd
+      # Commands to restart, reboot, or poweroff
+      pikvm_restart:
+        type: cmd
+        cmd: [/usr/bin/sudo, /usr/bin/systemctl, restart, kvmd]
       pikvm_reboot:
         type: cmd
         cmd: [/usr/bin/sudo, /usr/bin/reboot]
-      pikvm_restart_kvmd:
+      pikvm_poweroff:
         type: cmd
-        cmd: [/usr/bin/sudo, /usr/bin/systemctl, restart, kvmd]
+        cmd: [/usr/bin/sudo, /usr/bin/poweroff]
     scheme:
       # Indicators for active KVM switch inputs/outputs
       ch0_led:
@@ -121,22 +124,29 @@ kvmd:
         pin: 0
         mode: input
 
+      pikvm_restart:
+        driver: pikvm_restart
+        pin: 0
+        mode: output
+        switch: false
+
       pikvm_reboot:
         driver: pikvm_reboot
         pin: 0
         mode: output
         switch: false
 
-      pikvm_restart_kvmd:
-        driver: pikvm_restart_kvmd
+      pikvm_poweroff:
+        driver: pikvm_poweroff
         pin: 0
         mode: output
         switch: false
+
     view:
       # Table that will be shown when GPIO menu is opened
       table:
-        - ["#Asus MiniPC (1)", ch0_led, ch0_button, wol_server0 | WoL]
-        - ["#Asus MiniPC (2)", ch1_led, ch1_button, wol_server1 | WoL]
+        - ["#MiniPC", ch0_led, ch0_button, wol_server0 | WoL]
+        - ["#MiniPC", ch1_led, ch1_button, wol_server1 | WoL]
         - ["#PiKVM", ch2_led, ch2_button]
         - ["#Spare", ch3_led, ch3_button]
-        - ["#PiKVM", pikvm_led|green, pikvm_restart_kvmd|confirm|Restart kvmd, pikvm_reboot|confirm|Reboot PiKVM]
+        - ["#PiKVM", pikvm_led|green, pikvm_restart|confirm|Restart, pikvm_reboot|confirm|Reboot, pikvm_poweroff|confirm|Shutdown]
