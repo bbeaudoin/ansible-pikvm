@@ -1,3 +1,4 @@
+---
 ###############################################################################
 #                                                                             #
 #  Override KVMD settings.                                                    #
@@ -58,10 +59,10 @@ kvmd:
       # Commands to reboot or restart kvmd
       pikvm_reboot:
         type: cmd
-        cmd: [/usr/bin/sudo, reboot]
+        cmd: [/usr/bin/sudo, /usr/bin/reboot]
       pikvm_restart_kvmd:
         type: cmd
-        cmd: [/usr/bin/sudo, systemctl, restart, kvmd]
+        cmd: [/usr/bin/sudo, /usr/bin/systemctl, restart, kvmd]
     scheme:
       # Indicators for active KVM switch inputs/outputs
       ch0_led:

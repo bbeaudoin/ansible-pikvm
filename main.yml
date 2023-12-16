@@ -5,28 +5,61 @@
   gather_facts: false
 
   pre_tasks:
-    - name: Remount root read-write to prepare the SD card for changes
+    - name: Remount read-write to prepare for changes
       ansible.builtin.command: rw
       register: read_write
-      changed_when: my_output.rc != 0
+      changed_when: false
 
   tasks:
     - name: Attempt to configure PiKVM but always set SD card back to read-only
       block:
-        - name: Set PiKVM hostname for the host. Default is pikvm.
+        - name: Ensure the hostname is set according to preference
           ansible.builtin.hostname:
             name: "{{ hostname | default(inventory_hostname) }}"
           register: reboot_required
 
-        - name: Set PiKVM for the specified timezone
+        - name: Ensure the timezone is set according to preference
           community.general.timezone:
             name: "{{ timezone }}"
 
-        - name: Copy the appropriate mirrorlist to the PiKVM
+        - name: Ensure the mirrorlist is set according to preference
           ansible.builtin.copy:
             src: mirrorlist
             dest: /etc/pacman.d/mirrorlist
-            mode: u=rw,g=r
+            mode: "u=rw,g=r"
+
+        - name: Ensure the default root password is replaced
+          ansible.builtin.user:
+            name: root
+            password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
+
+        - name: Ensure the default kvmd admin password is replaced
+          ansible.builtin.lineinfile:
+            path: /etc/kvmd/htpasswd
+            regexp: "^admin:"
+            line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
+          notify:
+            - Reboot PiKVM
+
+        - name: Ensure kvmd is allowed to restart or reboot itself
+          ansible.builtin.copy:
+            content: "kvmd ALL=(root) NOPASSWD: /usr/bin/reboot, /usr/bin/systemctl restart kvmd"
+            dest: /etc/sudoers.d/ansible-kvmd
+            mode: "u=rw,g=r"
+
+        - name: Install preferred override.yaml set in inventory from files/
+          ansible.builtin.copy:
+            src: "{{ override_file }}"
+            dest: /etc/kvmd/override.yaml
+            mode: "u=rw,g=r"
+          notify:
+            - Restart kvmd
+
+        - name: Install the CyberPower MIB for CyberPower ATS and PDU support
+          ansible.builtin.copy:
+            src: CyberPower_MIB_v2.11.MIB
+            dest: /usr/share/snmp/mibs/
+            mode: "u=rw,g=r"
 
         - name: Refresh the package cache and install available updates
           community.general.pacman:
@@ -42,36 +75,12 @@
             state: latest
           with_items: "{{ package_list | default([]) }}"
 
-        - name: Generate or set root password from files/password-root
-          ansible.builtin.user:
-            name: root
-            password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
-
-        - name: Generate or set kvmd admin password from files/password-admin
-          ansible.builtin.lineinfile:
-            path: /etc/kvmd/htpasswd
-            regexp: "^admin:"
-            line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
-
-        - name: Install preferred override.yaml set in inventory from files/
-          ansible.builtin.copy:
-            src: "{{ override_file }}"
-            dest: /etc/kvmd/override.yaml
-            mode: u=rw,g=r
-          notify:
-            - Restart kvmd
-
-        - name: Install the CyberPower MIB for CyberPower ATS and PDU support
-          ansible.builtin.copy:
-            src: CyberPower_MIB_v2.11.MIB
-            dest: /usr/share/snmp/mibs/
-            mode: u=rw,g=r
-
       # Always remount PiKVM read-only to protect the SD card
       always:
-        - name: Remount Read-Only
+        - name: Remount read-only to protect the SD card
           ansible.builtin.command: ro
-          changed_when: my_output.rc != 0
+          register: read_only
+          changed_when: read_only.rc != 0
 
   handlers:
     - name: Restart kvmd
