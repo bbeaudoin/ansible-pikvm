@@ -1,39 +1,39 @@
-####################################################################
-#                                                                  #
-# Override Pi-KVM system settings. This file uses the YAML syntax. #
-#                                                                  #
-#    https://github.com/pikvm/pikvm/blob/master/pages/config.md    #
-#                                                                  #
-# All overridden parameters will be applied AFTER other configs    #
-# and "!include" directives and BEFORE validation.                 #
-# Not: Sections should be combined under shared keys.              #
-#                                                                  #
-####################################################################
+###############################################################################
+#                                                                             #
+#  Override KVMD settings.                                                    #
+#                                                                             #
+#    * https://docs.pikvm.org/first_steps/#structure-of-configuration-files   #
+#                                                                             #
+#  This file uses YAML syntax. All overridden parameters will be applied      #
+#  AFTER other configs and "!include" directives, and BEFORE validation.      #
+#  Values should be combined under common sections.                           #
+#                                                                             #
+###############################################################################
 #
 #########
 # Wrong #
 #########
-#kvmd:
-#    gpio:
-#        drivers: ...
-#kvmd:
-#    gpio:
-#        scheme: ...
+# kvmd:
+#   gpio:
+#     drivers: ...
+# kvmd:
+#   gpio:
+#     scheme: ...
 #
 ###########
 # Correct #
 ###########
-#kvmd:
-#    gpio:
-#        drivers: ...
-#        scheme: ...
+# kvmd:
+#   gpio:
+#     drivers: ...
+#     scheme: ...
 #
 ###########
 # Example #
 ###########
-#vnc:
-#    # See https://github.com/pikvm/pikvm/blob/master/pages/vnc.md
-#    keymap: /usr/share/kvmd/keymaps/ru # Set russian keymap
-#    auth:
-#        vncauth:
-#            enabled: true # Enable auth via /etc/kvmd/vncpasswd
+# vnc:
+#   # See https://docs.pikvm.org/vnc
+#   keymap: /usr/share/kvmd/keymaps/ru # Set russian keymap
+#   auth:
+#     vncauth:
+#       enabled: true # Enable auth via /etc/kvmd/vncpasswd

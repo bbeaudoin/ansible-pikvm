@@ -2,12 +2,13 @@
 ---
 - name: Configure PiKVM
   hosts: "{{ hosts | default('all') }}"
-  gather_facts: no
+  gather_facts: false
 
   pre_tasks:
     - name: Remount root read-write to prepare the SD card for changes
       ansible.builtin.command: rw
       register: read_write
+      changed_when: my_output.rc != 0
 
   tasks:
     - name: Attempt to configure PiKVM but always set SD card back to read-only
@@ -25,6 +26,7 @@
           ansible.builtin.copy:
             src: mirrorlist
             dest: /etc/pacman.d/mirrorlist
+            mode: u=rw,g=r
 
         - name: Refresh the package cache and install available updates
           community.general.pacman:
@@ -48,13 +50,14 @@
         - name: Generate or set kvmd admin password from files/password-admin
           ansible.builtin.lineinfile:
             path: /etc/kvmd/htpasswd
-            regexp: '^admin:'
-            line: "admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}"
+            regexp: "^admin:"
+            line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
 
         - name: Install preferred override.yaml set in inventory from files/
           ansible.builtin.copy:
             src: "{{ override_file }}"
             dest: /etc/kvmd/override.yaml
+            mode: u=rw,g=r
           notify:
             - Restart kvmd
 
@@ -62,11 +65,13 @@
           ansible.builtin.copy:
             src: CyberPower_MIB_v2.11.MIB
             dest: /usr/share/snmp/mibs/
+            mode: u=rw,g=r
 
       # Always remount PiKVM read-only to protect the SD card
       always:
         - name: Remount Read-Only
           ansible.builtin.command: ro
+          changed_when: my_output.rc != 0
 
   handlers:
     - name: Restart kvmd
