@@ -80,13 +80,15 @@
         - name: Remount read-only to protect the SD card
           ansible.builtin.command: ro
           register: read_only
-          changed_when: read_only.rc != 0
+          changed_when: false
 
   handlers:
+    - name: Reboot PiKVM
+      ansible.builtin.reboot:
+      register: rebooted
+
     - name: Restart kvmd
       ansible.builtin.systemd:
         name: kvmd
         state: restarted
-
-    - name: Reboot PiKVM
-      ansible.builtin.reboot:
+      when: rebooted is undefined
