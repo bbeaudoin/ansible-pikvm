@@ -15,6 +15,9 @@ def get_empty_vars():
     return json.dumps({})
 
 def get_list(pretty=False) -> str:
+    host_list=[]
+    for varfile in os.listdir(os.path.dirname(os.path.realpath(__file__)) + "/host_vars"):
+        host_list .append(os.path.splitext(varfile)[0])
     data = {
         '_meta': {
           'hostvars': {}
@@ -25,7 +28,7 @@ def get_list(pretty=False) -> str:
             ]
         },
         'ungrouped': {
-            'hosts': os.listdir(os.path.dirname(os.path.realpath(__file__)) + "/host_vars")
+            'hosts': host_list
         }
     }
     return json.dumps(data, indent=pretty)

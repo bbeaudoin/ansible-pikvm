@@ -2,13 +2,13 @@
 # Overrides specific to pikvm1
 hostname: pikvm1.openhappens.org
 override_file: override_tesmart.yaml
-package_list:
+host_packages:
+  - firewalld
   - rpi4-eeprom
   - net-snmp
 # Future: Extend this for other users, using these variables for notes.
 cert_paths:
-  - "/etc/kvmd/nginx/ssl/server.crt"
-  - "/etc/kvmd/vnc/ssl/server.crt"
+  - /etc/kvmd/nginx/ssl/server.crt
+  - /etc/kvmd/vnc/ssl/server.crt
 msd_files:
-  - "https://fw-download-alias1.raspberrypi.com/net_install/boot.img"
-
+  - https://fw-download-alias1.raspberrypi.com/net_install/boot.img
