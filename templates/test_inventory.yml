@@ -2,17 +2,14 @@ all:
   hosts:
     host1:
       overrides:
-        switch:
-          name: TESmart KVM Switch
+        kvm_switch:
           type: tesmart
           host: 10.0.2.12
           port: 5000
           port_range: 16
-          button_text: Eat Me
-          server_text: Boxen
     host2:
       overrides:
-        switch:
+        kvm_switch:
           name: ezCoo 4-port USB 3.0 Switch
           type: ezcoo
           device: /dev/ttyUSB0
@@ -22,7 +19,7 @@ all:
           server_text: MyServer
     host3:
       overrides:
-        switch:
+        kvm_switch:
           name: ezCoo 2-port USB 3.0 Switch
           type: ezcoo
           device: /dev/ttyUSB0
@@ -32,7 +29,7 @@ all:
           server_text: Host
     host4:
       overrides:
-        switch:
+        kvm_switch:
           name: TESmart KVM Switch
           type: tesmart
           host: 10.0.2.12
@@ -42,7 +39,7 @@ all:
           server_text: Boxen
     host5:
       overrides:
-        switch:
+        kvm_switch:
           name: ezCoo 4-port USB 3.0 Switch
           type: ezcoo
           device: /dev/ttyUSB0
