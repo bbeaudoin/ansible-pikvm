@@ -1,32 +1,120 @@
-# ansible-pikvm
+# Ansible Playbook to secure and configure PiKVM
 ## Introduction
-This repository serves primarily as a backup for my base configuration,
-the things I spend the most time doing when I maintain or reimage my
-devices. Sometimes it's quicker not to automate changes, Usually I only
-spend a few minutes a month but recently I reimaged all of my devices
-so it made sense to represent my manual activities as code.
+As someone who uses immutable infrastructure, declarative GitOps, infrastructure as code, and values automation to set, maintain, and secure my IoT (Internet of Things) devices with a lot of PiKVM hosts to manage, I decided to write and maintain a set of playbooks and extend them for others to use as well.
 
-It took a few minutes to write the basic playbook. Testing more general
-or more flexible automation to make this more useful for others took more
-time as did addressing the concerns of a security scanner that reacted
-to my initial password hashes, using password lookups and generators,
-writing documentation, and extending the playbook for others took hours.
+## Disclaimers
+_**These playbooks are provided as-is, without warranty. Please read the information here and be sure you understand the risks before using.**_
 
-## Motivation
+I'm just a user. I'm employed in the IT industry and a health sciences student at my local university. I am neither affiliated with PiKVM nor do they endorse this project. My employer permits me to contribute my own code to the community, this code is not my employer's code nor do they support or endorse this project in any way. My opinions are my own and do not reflect those of my employer, my school, nor the PiKVM project.
 
-Automation is often a trade-off based on scale. If I spend 5 minutes a
-month manually configuring a reimaged PiKVM or an hour a year vs. an
-hour or more automating and maintaining a playbook, the effort doesn't
-necessarily pay off. But if I can save an hour of effort for five, ten,
-or even a thousand others, it's possible to return that time to the
-community for other efforts.
+Please note I do not provide support for PiKVM, if you need help from the community please see the documentation at https://docs.pikvm.org/, I will not respond to general questions. I will do my best to help with the playbooks, however, as time permits.
 
-My personal time "savings" by automating and sharing my automation is
-definitely in the negative when I publish the work for others to use.
-That said, if 100 or even 1000 people in the user community can use this
-code for their installation and maintenance, even if only a portion of
-that time saving is returned back to the community, it makes this effort
-worthwhile.
+## What is PiKVM?
+PiKVM (https://pikvm.org/) is an IP KVM based on the Raspberry Pi platform. Users can build their own DIY PiKVM or purchase a device.
+
+If you are here you probably
+1. Have built a DIY or purchased a PiKVM and want to automate configuration and restores
+2. Are considering building or buying your own PiKVM and wondering how to maintain it
+3. Got lost on the Internet looking for https://google.com/.
+
+For those in one of the first two categories, I hope you find this project helpful. If you're in the last category, hopefully you find the project and PiKVM worth looking into further and find the links and PiKVM useful.
+
+# Using the playbook (Quick Start)
+There are going to be a lot of questions that are answered toward the end. I've tried to automate as much as I could to this point but it's still a work in progress. There are some things that will remain fairly consistent in terms of usage though.
+
+## Warning (Important Note)
+Automation can be a way to make consistent changes across many systems. During the execution of an automation playbook, the same command will be run against many systems at a time. While I tried to ensure unexpected things don't happen and to recover from some things that may happen, a misconfiguration in the host_vars for one or more hosts, or the group_vars that apply to all hosts by default, can leave one or more host unavailable or unusable until it has been reinstalled.
+
+While the playbook tasks do not make any permanent configuration changes to your Raspberry Pi or PiKVM, it will persist changes to the SD card without making any backups of previous configurations that are overwritten. It is possible package updates or package installations can fail. You may have to reinstall the PiKVM OS from one of the images offered at https://pikvm.org/download/. If possible, test with a device that has the latest image, latest updates, and back up any configuration you feel is important before proceeding.
+
+## Step by Step Instructions (no detailed commands)
+If you have used both Git and Ansible before and are familiar with the directory structure, YAML, playbooks, tasks, inventories, etc. you should not find any surprises here. If you haven't, you may be more comfortable learning one or more of the above topics.
+
+1. Install git and ansible-core on a Linux or MacOS machine. If you're on Windows, you can install Linux from the Windows store.
+2. Clone this repository on your compatible system or virtual machine.
+3. Generate an SSH public-private keypair using `ssh-keygen` and copy to the PiKVM hosts using `ssh-copy-id root@<host>`
+4. Put the root and admin passwords you want into the following files by default:
+   1. `./ansible-pikvm/files/password-root`
+   2. `./ansible-pikvm/files/password-admin`
+5. Note, if you do not provide custom passwords, random passwords will be generated and written to these files.
+6. If your passwords get reset, you should be able to use the SSH keys installed in step 3 to access your PiKVMs.
+7. If you set a passphrase on your SSH keys, you may need to use `ssh-agent` and `ssh-add`
+   1. Tip: Add `eval $(ssh-agent)` to `~/.bash_profile` so it runs on login.
+   2. Tip: Also add `kill ${SSH_AGENT_PID}` to `~/.bash_logout` to prevent leaving 100 unused agents running.
+8. Your main configuration files will be the following:
+   1. For configuration common to all hosts: `./ansible-pikvm/inventory/group_vars/all.yml`
+   2. For host-specific configuration: `./ansible-pikvm/inventory/host_vars/pikvm.yml`
+9. Remove any other inventory `host_vars` files after using them as examples for your own hosts.
+10. DO NOT REMOVE THE `./ansible-pikvm/inventory/dynamic.py` script. That is used to create the inventory.
+11. Currently the example overrides are not templated and are in the `files` subdirectory.
+    1. The default configuration will overwrite any overrides on existing hosts.
+    2. Change or replace the existing `override*.yaml` files as needed to fit your configuration.
+13. If you haven't already, use `cd` to enter `ansible-pikvm` subdirectory itself.
+14. If you haven't already, read the task list in the playbook in `main.yml`
+    1. Comment out or remove any tasks you do not want to perform.
+    2. Some will exclude themselves if certain conditions are not met (variable is not defined).
+    3. Leave the read-write, read-only, recovery block, and restart/reboot tasks at a minimum.
+    4. You can always make a backup of `main.yml` or use `git reset --hard` to discard all changes.
+16. Check your host inventory and variables, using `ansible-inventory --list`.
+17. Check the main.yaml playbook using `ansible-playbook --syntax-check main.yml`.
+18. If you don't see any errors, you can run without changes using `ansible-playbook --check main.yml`.
+19. After ensuring the dry-run completes successfully, you can use `ansible-playbook main.yml`.
+
+As the playbook and templates, even the configuration variables and formats or task lists aren't final, I haven't gone into too much detail. It is likely any changes you make locally will conflict with my changes so you may not be able to use `git pull` to download the latest updates and your configuration files may not be compatible with future changes to the playbook.
+
+This project is about a week old, my Ansible skills have gotten rusty, there have been lots of changes to Ansible over the past 18 months, and I have to make things work as best as I can with the upstream project in a way that makes sense, both to me and to the PiKVM instalations I'm working with. That said much of what is already defined shouldn't change without good reason but any variables in group or host vars that aren't used may never be used or may not have the same format once I start writing the tasks to use them. The `override*.yaml` files will definitely be going away in the future though.
+
+# Questions and Answers
+It would be a misnomer to call this a "Frequently Asked Questions" section because nobody has really asked any questions yet. Moreso they are critical of the effort to standardize and automate configuration with one person saying I'm creating a "snowflake". That's certainly not the goal of consistent automation. I'll also most certainly change if there are upstream changes that make sense or become necessary.
+
+## What does this playbook do?
+In short, it's a set of tasks that performs both basic and advanced configuration of a PiKVM based on the Arch Linux Arm operating system. It's a work in progress but the following has been tested and verified against the DIY (V2), V3 (HAT), V4 Mini (CM4, no USB or HDMI output), and V4 Plus models. This has not been tested against the V1 or discontinued V0 versions.
+
+## What are the benefits of this playbook?
+The playbook automates all of the currently supported configuration against one or more PiKVM installations. It runs quickly and consistently (or as consistently as your network permits). Enthusastically speaking, the playbook benefits you by ensuring that
+
+1. Your configuration is always backed up on the Ansible control host and can always be restored
+2. Default passwords are replaced with your own strong passwords hashed with strong trusted cryptographic functions
+3. An additional layer of network security is installed and configured on your PiKVM using firewalld
+4. Software is updated to the latest available packages from Arch Linux Arm or the PiKVM project mirrors
+5. Configuration settings specified for PiKVM are never lost, forgotten, or left default when replacing the SD card
+6. Any non-default packages or services can be deployed and maintained on one or more of your installations
+7. You can add or remove customizations automatically by pushing changes to PiKVM's override configuration
+8. Automatically recover from certain errors that can leave your PiKVM vulnerable to power loss damage
+
+Before writing a playbook, I did very little customizations that I wasn't willing to loose when my SD card became corrupted or unusable due to bad package updates. I was consistently forgetting to switch the SD card to read-only, rewriting and debugging override files, and often had to refer to my own GitHub Gists for configurations I had used in the past because I didn't have a local copy on my control host.
+
+## What doesn't the playbook do?
+I'm still maintaining my server certificates and keys manually. I can write the tasks to deploy those configurations and restart the services, but I would also like to set up automatic certificate rotation using the ACME protocol that Let's Encrypt and other self-hosted certificate systems, such as Keycloak, support.
+
+Templating the override.yaml is going to be very important to me. With approximately 4 lines of code for 5 host files, I can generate the 800 lines of code needed to configure the four models of switches connected to 5 hosts. With anotehr 34 lines of code (in compact YAML format) I could add all of the hostnames and Wake on Lan as well, something I would estimate to be over 1000 lines of configurations if I was manually maintaining my override.yaml files.
+
+Finally, everything else I might find useful to configure and maintain, such as Tailscale or Janus or OLED displays, fans, audio configuration, EDID, mouse jigglers, additional mouse modes such as adding relative to non-V4 override configurations, even things I haven't found useful or worthwhile to configure becomes a possibility with time and effort devoted to writing and testing automation for those features. Each should be available to configure across all hosts or individually with host-specific configuration.
+
+## My General Motivations
+
+The first playbook took minutes to write and probably saved me hours of effort. Looking back, less than 20% of that time was to meet my critical use cases, more than 80% of my time has been on extending, testing, scaling out the test to cover more systems, troubleshooting, linting, and documenting. It's my hope that when I'm done templating the files, managing the certificate configurations, and adding other features, that others might find this even more useful.
+
+If others find this project useful, I'll have saved them much more time and effort than I have my own. If automation leads to more installations being standard, it may save the PiKVM project maintainers time and some of these changes might be adopted in the upstream project.
+
+Next semester when my studies start again I won't have much time to maintain this code so I'm trying to get as much done now. Not only am I refreshing my Ansible skills that I can use in my job, I hope that I won't have to individually maintain my PiKVM installations or the automation aside from small updates to keep compatible with upsstream changes, especially as it's been suggested some standard configuration will move to a new data partition in the future.
+
+# Credits
+Credit for the dynamic inventory goes to Jose Vicente Nunez Zuleta. This saved me a lot of time and his licensing allows me to modify, publish with my modifications, and relicense the portions used under the project's license. You may see his original work in the following places:
+
+https://www.redhat.com/sysadmin/ansible-dynamic-inventory-python
+https://github.com/josevnz/ExtendingAnsibleWithPython
+
+The PiKVM project (https://pikvm.org/) and documentation (https://docs.pikvm.org/) deserves a lot of credit. I previously used some of their comments and configuration examples in my files under the GNU General Public License v3.0. As the examples do not match the official YAML style guides and won't be helpful when the overrides are templated as Jinja2, I've removed the comments.
+
+# Previous documentation that hasn't been updated
+Ansible and YAML are meant to be both human and machine readable, but code is, first and foremost, supposed to be easy for machines to read. That humans can read it is a fortunate coincidence, while that's a consideration, humans aren't the intended audience for those files.
+
+So much time is spent writing documentation that writing too much documentation while writing, testing, and developing code, that I'm not able to complete my goals quickly enough before I visit with my parents over the holidays. That said, I've removed anything in the following sections that might contradict what I've written more recently or is completely outdated with the latest changes. This section is the last of the updated documentation in the readme.
+
+The following sections were meant to help those who didn't understand git, Ansible, SSH, etc. as a way to possibly help. That said, reading the documentation, learning how to write playbooks and tasks, and how to manage inventories may be best left to the other project's documentation than here, especially if writing and maintaining such things is duplicating efforts from those projects and their communities.
+
+I'll shift my focus on the code and try to keep it understandable and add documentation in the form of comments where I belive things may be unclear to others. Please refer to the files, templates, playbooks, and examples of my own host configurations until I'm able to update the documentation here again.
 
 ## Prerequisites
 If you have any questions about using Ansible or writing Ansible playbooks,
@@ -49,26 +137,6 @@ Homebrew (https://brew.sh/) on your device.
 General installation and usage is outside of the scope of this document but
 I will provide some getting started information based on my own systems and
 use cases.
-
-## Quickstart
-Generate your keys using `ssh-keygen`, copy them to your hosts using the
-`ssh-copy-id` command, register passphrase protected private keys with
-`ssh-agent`, if needed, clone the ansible-pikvm repo to your home directory,
-review the files, modify the configuration, inventory, and playbook for your
-needs, and, once ready, invoke the playbook using the following command:
-
-```
-ansible-playbook main.yml
-```
-
-If all goes well, your PiKVM packages will be updated and the configuration
-will be applied to all of your PiKVM devices. Some of mine use different
-overrides, I've included copies of my TESmart 16-port and EZCoo configs
-along with the default (example) override.yaml.
-
-Although I consider the rest to be generally out-of-scope for my own use,
-I've added some additional information for those that may need help getting
-started.
 
 ## General git and Ansible Installation and Usage
 
@@ -108,12 +176,7 @@ pull requests later.
 ### Ansible and Playbook Configuration
 The primary ansible.cfg lives in /etc/ansible/ansible.cfg along with the
 primary inventory in /etc/ansible/hosts. It is often best to use a local
-ansible.cfg and inventory file or directory, I've used ansible.cfg and an
-inventory directory with the primary hosts file in `./inventory/main.yml`.
-
-The inventory contains host-specific configuration information and both
-host and group variables. Hosts and variables in the `all` section are
-global, group and host-specific variables will override global variables.
+ansible.cfg and inventory file or directory.
 
 ## Preparing your environment and remote hosts
 Ansible usually uses SSH public key authentication with a private key
@@ -181,18 +244,7 @@ For security, sha512 will be used for the root password and bcrypt will
 be used for the nginx proxy. These have both been tested and verified to
 work with the current package set used.
 
-## What the playbook does
-The playbook will update the package mirrorlist to the one specified and
-update all installed packages. Additional packages will be installed for
-maintaining the firmware and communicating via SNMP.
-
-After the package maintenance, passwords will be configured, overrides
-will be set as specified for each PiKVM host. For support of CyberPower
-ATS (Automatic Transfer Switch), Switched PDUs (Power Distribution Units),
-and UPS (Uninterruptible Power Supply) devices, the CyberPower MIB (Management
-Information Base) will also be deployed.
-
-# Additional Information
+## Additional Information
 The playbook and files are as-is with no warranty. Please review the files,
 if any of the changes make your device unusable, you may need to reimage
 your SD card using an appropriate image from https://pikvm.org/download/.
