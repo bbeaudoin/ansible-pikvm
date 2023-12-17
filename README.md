@@ -9,25 +9,15 @@ I'm just a user. I'm employed in the IT industry and a health sciences student a
 
 Please note I do not provide support for PiKVM, if you need help from the community please see the documentation at https://docs.pikvm.org/, I will not respond to general questions. I will do my best to help with the playbooks, however, as time permits.
 
-## What is PiKVM?
-PiKVM (https://pikvm.org/) is an IP KVM based on the Raspberry Pi platform. Users can build their own DIY PiKVM or purchase a device.
-
-If you are here you probably
-1. Have built a DIY or purchased a PiKVM and want to automate configuration and restores
-2. Are considering building or buying your own PiKVM and wondering how to maintain it
-3. Got lost on the Internet looking for https://google.com/.
-
-For those in one of the first two categories, I hope you find this project helpful. If you're in the last category, hopefully you find the project and PiKVM worth looking into further and find the links and PiKVM useful.
-
 # Using the playbook (Quick Start)
-There are going to be a lot of questions that are answered toward the end. I've tried to automate as much as I could to this point but it's still a work in progress. There are some things that will remain fairly consistent in terms of usage though.
+This project is about a week old, my Ansible skills have gotten rusty, there have been lots of changes to Ansible over the past 18 months, and I have to make things work as best as I can with the upstream project in a way that makes sense, both to me and to the PiKVM installations I'm working with. That said much of what is already defined shouldn't change without good reason but any variables in group or host vars that aren't used may never be used or may not have the same format once I start writing the tasks to use them. The `override*.yaml` files will definitely be going away in the future though.
 
 ## Warning (Important Note)
-Automation can be a way to make consistent changes across many systems. During the execution of an automation playbook, the same command will be run against many systems at a time. While I tried to ensure unexpected things don't happen and to recover from some things that may happen, a misconfiguration in the host_vars for one or more hosts, or the group_vars that apply to all hosts by default, can leave one or more host unavailable or unusable until it has been reinstalled.
+Although this project does not make any firmware changes, persisting changes only to the SD card, it is possible that the code or pre-existing software or physical state of the SD card (damage, corruption, etc.) when used with this playbook or the configuration can leave your PiKVM OS inaccessible or in worse state.
 
-While the playbook tasks do not make any permanent configuration changes to your Raspberry Pi or PiKVM, it will persist changes to the SD card without making any backups of previous configurations that are overwritten. It is possible package updates or package installations can fail. You may have to reinstall the PiKVM OS from one of the images offered at https://pikvm.org/download/. If possible, test with a device that has the latest image, latest updates, and back up any configuration you feel is important before proceeding.
+Please use a fresh SD card and fresh image from https://pikvm.org/download/. If you have any pre-existing configuration, please back it up somewhere safe before using the playbooks.
 
-## Step by Step Instructions (no detailed commands)
+## High Level Overview
 If you have used both Git and Ansible before and are familiar with the directory structure, YAML, playbooks, tasks, inventories, etc. you should not find any surprises here. If you haven't, you may be more comfortable learning one or more of the above topics.
 
 1. Install git and ansible-core on a Linux or MacOS machine. If you're on Windows, you can install Linux from the Windows store.
@@ -62,10 +52,18 @@ If you have used both Git and Ansible before and are familiar with the directory
 
 As the playbook and templates, even the configuration variables and formats or task lists aren't final, I haven't gone into too much detail. It is likely any changes you make locally will conflict with my changes so you may not be able to use `git pull` to download the latest updates and your configuration files may not be compatible with future changes to the playbook.
 
-This project is about a week old, my Ansible skills have gotten rusty, there have been lots of changes to Ansible over the past 18 months, and I have to make things work as best as I can with the upstream project in a way that makes sense, both to me and to the PiKVM instalations I'm working with. That said much of what is already defined shouldn't change without good reason but any variables in group or host vars that aren't used may never be used or may not have the same format once I start writing the tasks to use them. The `override*.yaml` files will definitely be going away in the future though.
-
 # Questions and Answers
 It would be a misnomer to call this a "Frequently Asked Questions" section because nobody has really asked any questions yet. Moreso they are critical of the effort to standardize and automate configuration with one person saying I'm creating a "snowflake". That's certainly not the goal of consistent automation. I'll also most certainly change if there are upstream changes that make sense or become necessary.
+
+## What is PiKVM?
+PiKVM (https://pikvm.org/) is an IP KVM based on the Raspberry Pi platform. Users can build their own DIY PiKVM or purchase a device.
+
+If you are here you probably
+1. Have built a DIY or purchased a PiKVM and want to automate configuration and restores
+2. Are considering building or buying your own PiKVM and wondering how to maintain it
+3. Got lost on the Internet looking for https://google.com/.
+
+For those in one of the first two categories, I hope you find this project helpful. If you're in the last category, hopefully you find the project and PiKVM worth looking into further and find the links and PiKVM useful.
 
 ## What does this playbook do?
 In short, it's a set of tasks that performs both basic and advanced configuration of a PiKVM based on the Arch Linux Arm operating system. It's a work in progress but the following has been tested and verified against the DIY (V2), V3 (HAT), V4 Mini (CM4, no USB or HDMI output), and V4 Plus models. This has not been tested against the V1 or discontinued V0 versions.
@@ -90,6 +88,20 @@ I'm still maintaining my server certificates and keys manually. I can write the 
 Templating the override.yaml is going to be very important to me. With approximately 4 lines of code for 5 host files, I can generate the 800 lines of code needed to configure the four models of switches connected to 5 hosts. With anotehr 34 lines of code (in compact YAML format) I could add all of the hostnames and Wake on Lan as well, something I would estimate to be over 1000 lines of configurations if I was manually maintaining my override.yaml files.
 
 Finally, everything else I might find useful to configure and maintain, such as Tailscale or Janus or OLED displays, fans, audio configuration, EDID, mouse jigglers, additional mouse modes such as adding relative to non-V4 override configurations, even things I haven't found useful or worthwhile to configure becomes a possibility with time and effort devoted to writing and testing automation for those features. Each should be available to configure across all hosts or individually with host-specific configuration.
+
+## What will this project specifically avoid?
+There are some things I'm specifically avoiding with this playbook for safety and compatibility.
+
+1. There will not be any firmware modifications performed, nor exceptions.
+2. Configuration that is contrary to the purpose of the upstream project is not accepted.
+3. Unless there is good reason, this playbook will not break existing OS standards.
+   1. This is contentious as the playbook seeks to minimize non-standard changes
+   2. Until conventions become a baseline configuration standard, existing ones will be followed
+4. Nothing that violates the spirit of the project or other's rights will be accepted.
+5. Backward compatibility for older or legacy builds are explicitly out-of-scope.
+6. Products or systems that are incompatible with the supported PiKVM software or OS.
+
+There is a desire to keep this project open, inclusive, usable, and available.
 
 ## My General Motivations
 
