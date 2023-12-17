@@ -1,0 +1,19 @@
+# Default variables for all hosts
+---
+# PiKVM-specific variables to avoid warnings and errors
+ansible_python_interpreter: /usr/bin/python
+ansible_user: root
+ansible_become: false
+ansible_remote_tmp: /tmp/
+
+# Playbook variables used if no other defaults given
+override_file: override.yaml
+password_root: files/password-root
+password_admin: files/password-admin
+
+timezone: America/New_York
+
+group_packages:
+  - firewalld
+
+firewall_config: true

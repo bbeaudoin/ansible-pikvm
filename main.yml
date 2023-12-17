@@ -15,12 +15,11 @@
         package_list: "{{ (group_packages | default([]) + host_packages | default([])) | unique }}"
 
   tasks:
-    - name: Attempt to configure PiKVM but always set SD card back to read-only
+    - name: Attempt to configure PiKVM. Reboot on non-ignored errors.
       block:
         - name: Ensure the hostname is set according to preference
           ansible.builtin.hostname:
             name: "{{ hostname | default(inventory_hostname) }}"
-          register: reboot_required
 
         - name: Ensure the timezone is set according to preference
           community.general.timezone:
@@ -59,11 +58,14 @@
           notify:
             - Restart kvmd
 
+        # Download the latest CyberPower MIB from the CyberPower website:
+        # https://www.cyberpowersystems.com/products/software/mib-files/
         - name: Install the CyberPower MIB for CyberPower ATS and PDU support
           ansible.builtin.copy:
-            src: CyberPower_MIB_v2.11.MIB
+            src: cyberpower_mib
             dest: /usr/share/snmp/mibs/
             mode: u=rw,g=r
+          when: cyberpower_mib is defined
 
         - name: Refresh the package cache and install available updates
           community.general.pacman:
@@ -72,6 +74,9 @@
           register: reboot_required
           notify:
             - Reboot PiKVM
+          # Note, the error "could not update package db" indicates a mirror
+          # could not be reached. Other errors may need manual intervention.
+          ignore_errors: true
 
         - name: Install additional packages from a list of desired packages
           community.general.pacman:
@@ -79,6 +84,9 @@
             state: latest
           with_items: "{{ package_list | default([]) }}"
           register: packages
+          # While an error installing an optional package may not cause an
+          # issue with a reboot, manual intervention may be needed here.
+          ignore_errors: true
 
         - name: Ensure the firewall rules are set as defined in the host vars
           ansible.builtin.template:
@@ -102,12 +110,17 @@
             - firewall_rule is changed and firewalld is not changed
           changed_when: true
 
+        # Changed this from an "always" task to a task that is best handled
+        # by a rescue task. With the potential for update issues, a more
+        # granular set of blocks may be needed to handle failures.
         - name: Remount read-only to protect the SD card
           ansible.builtin.command: ro
           register: remount_task
           changed_when: remount_task.rc != 0
           failed_when: remount_task.rc != 0
 
+      # The rescue block will reboot PiKVM if there were any errors, such
+      # as failing to remount the SD card read-only, to avoid later wear.
       rescue:
         - name: Recover failed tasks by sending PiKVM for a reboot
           ansible.builtin.reboot:
