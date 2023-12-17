@@ -1,0 +1,52 @@
+---
+# kvmd overrides settings
+# https://docs.pikvm.org/first_steps/#structure-of-configuration-files
+
+{% if overrides is defined %}
+kvmd:
+{% if mouse is defined %}
+  hid:
+{% endif %}
+
+{% if overrides.switch is defined %}
+  gpio:
+    drivers:
+      {{ overrides.switch.type }}:
+        type: {{ overrides.switch.type }}
+{% if overrides.switch.host is defined %}
+        host: {{ overrides.switch.host }}
+{% endif %}
+{% if overrides.switch.port is defined %}
+        port: {{ overrides.switch.port }}
+{% endif %}
+{% if overrides.switch.device is defined %}
+        device: {{ overrides.switch.device }}
+{% endif %}
+{% if overrides.switch.protocol is defined %}
+        protocol: {{ overrides.switch.protocol }}
+{% endif %}
+
+    scheme:
+{% for port_number in range(overrides.switch.port_range) %}
+      server{{ port_number }}_led:
+        driver: {{ overrides.switch.type }}
+        mode: input
+        pin: {{ port_number }}
+      server{{ port_number }}_button:
+        driver: {{ overrides.switch.type }}
+        mode: output
+        pin: {{ port_number }}
+        switch: false
+{% endfor %}
+
+    view:
+      table:
+{% if overrides.switch.name is defined %}
+        - [{{ overrides.switch.name }}]
+        - []
+{% endif %}
+{% for port_number in range(overrides.switch.port_range) %}
+        - ["#{{ overrides.switch.server_text }} {{ port_number + 1 }}", server{{ port_number }}_led, server{{ port_number }}_button|{{ overrides.switch.button_text }}]
+{% endfor %}
+{% endif %}
+{% endif %}

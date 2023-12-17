@@ -6,14 +6,32 @@ ansible_user: root
 ansible_become: false
 ansible_remote_tmp: /tmp/
 
-# Playbook variables used if no other defaults given
-override_file: override.yaml
+# Default locations and names of the password files. The .gitignore will
+# cause these files to be ignored, if present, but you may wish to store
+# your password files elsewhere for safety.
+#
+# Note, the filenames and paths may also be set individual for each of the
+# hosts in the inventory/host_vars/ files to set per-host passwords.
 password_root: files/password-root
 password_admin: files/password-admin
 
+# If needed, override the timezone on a per-host basis using host_vars
 timezone: America/New_York
 
+# All hosts will get the firewalld package installed. If this package should
+# not be installed on any hosts, set `group_packages: {}` in the host_vars.
 group_packages:
   - firewalld
 
-firewall_config: true
+# This may be overridden on a per-host basis in host_vars.
+firewall_config:
+  - services:
+      - ssh
+      - dhcpv6-client
+      - http
+      - http3
+      - https
+  - protocols:
+      - tcp: {}
+      - udp:
+          - 20000-40000

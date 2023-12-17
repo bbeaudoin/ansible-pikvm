@@ -1,7 +1,6 @@
 ---
 # Overrides specific to pikvm1
 hostname: pikvm1.openhappens.org
-override_file: override_tesmart.yaml
 host_packages:
   - firewalld
   - rpi4-eeprom
@@ -12,3 +11,13 @@ cert_paths:
   - /etc/kvmd/vnc/ssl/server.crt
 msd_files:
   - https://fw-download-alias1.raspberrypi.com/net_install/boot.img
+
+overrides:
+  switch:
+    name: TESmart KVM Switch
+    type: tesmart
+    host: 10.0.2.12
+    port: 5000
+    port_range: 16
+    button_text: Eat Me
+    server_text: Boxen

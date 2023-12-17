@@ -1,0 +1,11 @@
+---
+- name: Test the override.conf template
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Template override.conf.j2 to override.conf
+      local_action:
+        module: ansible.builtin.template
+        src: override.yaml.j2
+        dest: "/tmp/override_{{ inventory_hostname }}.yaml"
+        mode: u=rw,g=r,o=r

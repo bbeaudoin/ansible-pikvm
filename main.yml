@@ -50,11 +50,12 @@
             dest: /etc/sudoers.d/ansible-kvmd
             mode: u=rw,g=r
 
-        - name: Install preferred override.yaml set in inventory from files/
-          ansible.builtin.copy:
-            src: "{{ override_file }}"
+        - name: Ensure appropriate host override template is deployed
+          ansible.builtin.template:
+            src: override.yaml.j2
             dest: /etc/kvmd/override.yaml
             mode: u=rw,g=r
+          when: overrides is defined
           notify:
             - Restart kvmd
 
@@ -107,7 +108,7 @@
         - name: Reload the firewall configuration
           ansible.builtin.shell: firewall-cmd --reload
           when:
-            - firewall_rule is changed and firewalld is not changed
+            - firewall_rule is changed and firewall_service is not changed
           changed_when: true
 
         # Changed this from an "always" task to a task that is best handled
