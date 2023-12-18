@@ -1,4 +1,14 @@
 ---
 # Overrides specific to pikvm3
 ansible_host: 10.0.0.51
-override_file: override_ezcoo.yaml
+
+overrides:
+  kvm_switch:
+    # Name is optional, the type and size is currently not.
+    name: Bookshelf Lab 4-Port ezCoo Switch
+    type: ezcoo
+    size: 4
+
+    # This switch uses the ezCoo defaults in override.yaml
+    # device: /dev/ttyUSB0
+    # protocol: 2

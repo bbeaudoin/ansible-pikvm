@@ -1,5 +1,6 @@
 ---
-- name: Test the override.conf template
+# Test playbook for the template generation based on the test inventory.
+- name: Test generation of different override.yaml with different host_vars
   hosts: all
   gather_facts: false
   tasks:

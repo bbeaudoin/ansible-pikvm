@@ -27,26 +27,23 @@ kvmd:
     {%- endif %}
   {%- endif %}
 
-  {%- if overrides.kvm_switch is defined and overrides.kvm_switch.type is defined and overrides.kvm_switch.port_range is defined -%}
+  {%- if overrides.kvm_switch is defined and overrides.kvm_switch.type is defined and overrides.kvm_switch.size is defined -%}
   gpio:
     drivers:
       {{ overrides.kvm_switch.type }}:
         type: {{ overrides.kvm_switch.type }}
-        {% if overrides.kvm_switch.host is defined -%}
-        host: {{ overrides.kvm_switch.host }}
+        {% if overrides.kvm_switch.type == 'tesmart' -%}
+        host: {{ overrides.kvm_switch.host | default('%-15s # Default for TESmart' % "192.168.1.10") }}
+        port: {{ overrides.kvm_switch.port | default('%-15d # Default for TESmart' % 5000) }}
         {% endif -%}
-        {% if overrides.kvm_switch.port is defined -%}
-        port: {{ overrides.kvm_switch.port }}
-        {% endif -%}
-        {% if overrides.kvm_switch.device is defined -%}
-        device: {{ overrides.kvm_switch.device }}
-        {% endif -%}
-        {% if overrides.kvm_switch.protocol is defined -%}
-        protocol: {{ overrides.kvm_switch.protocol }}
+        {% if overrides.kvm_switch.type == 'ezcoo' -%}
+        device: {{ overrides.kvm_switch.device | default('%-15s # Default for ezCoo' % "/dev/ttyUSB0") }}
+        protocol: {{ overrides.kvm_switch.protocol | default('%-13d # Default for ezCoo' % 2) }}
         {% endif %}
 
+    # Configuration specifies a {{ overrides.kvm_switch.size }}-port KVM switch
     scheme:
-      {% for port_number in range(overrides.kvm_switch.port_range) -%}
+      {% for port_number in range(overrides.kvm_switch.size) -%}
       server{{ port_number }}_led:
         driver: {{ overrides.kvm_switch.type }}
         mode: input
@@ -65,7 +62,7 @@ kvmd:
         - []
         {% endif -%}
 
-        {%- for port_number in range(overrides.kvm_switch.port_range) -%}
+        {%- for port_number in range(overrides.kvm_switch.size) -%}
         - ["#{{ '%2d' % (port_number + 1) }}: {{ overrides.kvm_switch.server_text | default('Server %2d' % (port_number + 1)) }}", server{{ port_number }}_led, "server{{ port_number }}_button | {{ overrides.kvm_switch.button_text | default("Select") }}"]
         {% endfor -%}
   {% endif -%}

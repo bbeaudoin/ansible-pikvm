@@ -14,13 +14,15 @@ msd_files:
 
 overrides:
   kvm_switch:
-    # The name is optional
-    name: TESmart KVM Switch
+    # Name is optional
+    name: Lab Rack 16-port TESmart Switch
+
+    # All four variables are required for tesmart
     type: tesmart
     host: 10.0.2.12
     port: 5000
-    # This must be defined and match your switch
-    port_range: 16
+    size: 16
+
     # The button and server labels are optional
-    button_text: Eat Me
-    server_text: Boxen
+    # button_text: Eat Me
+    # server_text: Boxen
