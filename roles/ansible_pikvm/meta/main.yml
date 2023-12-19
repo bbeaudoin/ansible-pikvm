@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: Brian Beaudoin
+  description: Configures a PiKVM to meet configuration and security baseline
+  license: GPL-3.0-only
+  min_ansible_version: "2.15"
+  platforms:
+    - name: ArchLinux
+      versions:
+        - all
+  galaxy_tags:
+    - system
