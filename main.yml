@@ -1,7 +1,7 @@
 # Definitely a work in progress. Quick and dirty playbook for PiKVM setup.
 ---
 - name: Configure PiKVM
-  hosts: "{{ hosts | default('all') }}"
+  hosts: "{{ host_list | default('all') }}"
   gather_facts: false
 
   pre_tasks:

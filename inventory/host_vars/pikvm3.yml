@@ -5,10 +5,10 @@ ansible_host: 10.0.0.51
 overrides:
   kvm_switch:
     # Name is optional, the type and size is currently not.
-    name: Bookshelf Lab 4-Port ezCoo Switch
+    name: Bookshelf Lab 2-Port ezCoo Switch
     type: ezcoo
-    size: 4
+    size: 2
 
     # This switch uses the ezCoo defaults in override.yaml
     # device: /dev/ttyUSB0
-    # protocol: 2
+    protocol: 1
