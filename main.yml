@@ -1,11 +1,23 @@
 ---
 - hosts: "{{ host_list | default('all') }}"
   name: Playbook to configure PiKVM Hosts
-  tasks:
-    - name: Combine group and host-specific package lists
-      ansible.builtin.set_fact:
-        package_list: "{{ (group_packages | default([]) + host_packages | default([])) | unique }}"
+  gather_facts: false
 
+  tasks:
     - name: Include the role to complete PiKVM configuration
       ansible.builtin.include_role:
         name: ansible_pikvm
+      tags:
+        - override_config
+        - baseline_config
+        - security_config
+        - package_maintenance
+
+- hosts: localhost
+  name: Print options for the user
+  gather_facts: false
+
+  tasks:
+    - name: Make sure the user knows tags control what runs
+      ansible.builtin.debug:
+        msg: "Run with '--tags {{ ansible_run_tags }}'. Use 'ansible-playbook --list-tags main.yml' for options."

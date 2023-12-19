@@ -2,6 +2,12 @@
 # tasks file for ansible_pikvm
 - name: Remount read-write to prepare for changes
   ansible.builtin.command: rw
+  tags:
+    - override_config
+    - baseline_config
+    - security_config
+    - package_maintenance
+    - never
   register: read_write
   changed_when: false
 
@@ -10,41 +16,56 @@
     - name: Ensure the hostname is set according to preference
       ansible.builtin.hostname:
         name: "{{ hostname | default(inventory_hostname) }}"
+      tags:
+        - baseline_config
+        - never
 
     - name: Ensure the timezone is set according to preference
       community.general.timezone:
         name: "{{ timezone }}"
-
-    - name: Ensure the mirrorlist is set according to preference
-      ansible.builtin.copy:
-        src: mirrorlist
-        dest: /etc/pacman.d/mirrorlist
-        mode: u=rw,g=r
+      tags:
+        - baseline_config
+        - never
 
     - name: Ensure the default root password is replaced
       ansible.builtin.user:
         name: root
         password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
+      tags:
+        - baseline_config
+        - security_config
+        - never
 
     - name: Ensure the default kvmd admin password is replaced
       ansible.builtin.lineinfile:
         path: /etc/kvmd/htpasswd
         regexp: "^admin:"
         line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
+      tags:
+        - baseline_config
+        - security_config
+        - never
       notify:
-        - Reboot PiKVM
+        - Restart kvmd
 
-    - name: Ensure kvmd is allowed to restart or reboot itself
+    - name: Add add sudoers to kvmd (will move to inventory later)
       ansible.builtin.copy:
         content: "kvmd ALL=(root) NOPASSWD: /usr/bin/reboot, /usr/bin/poweroff, /usr/bin/systemctl restart kvmd"
         dest: /etc/sudoers.d/ansible-kvmd
         mode: u=rw,g=r
+      tags:
+        - security_config
+        - never
 
-    - name: Ensure appropriate host override template is deployed
+    - name: Ensure the rendered override.yaml matches the host
       ansible.builtin.template:
         src: override.yaml.j2
         dest: /etc/kvmd/override.yaml
         mode: u=rw,g=r
+      tags:
+        - baseline_config
+        - override_config
+        - never
       when: overrides is defined
       notify:
         - Restart kvmd
@@ -56,12 +77,36 @@
         src: cyberpower_mib
         dest: /usr/share/snmp/mibs/
         mode: u=rw,g=r
+      tags:
+        - baseline_config
+        - never
       when: cyberpower_mib is defined
+
+    - name: Combine group and host-specific package lists
+      ansible.builtin.set_fact:
+        package_list: "{{ (group_packages | default([]) + host_packages | default([])) | unique }}"
+      tags:
+        - security_config
+        - package_updates
+        - never
+
+    - name: Ensure the mirrorlist is set according to preference
+      ansible.builtin.copy:
+        src: mirrorlist
+        dest: /etc/pacman.d/mirrorlist
+        mode: u=rw,g=r
+      tags:
+        - baseline_config
+        - never
 
     - name: Refresh the package cache and install available updates
       community.general.pacman:
         upgrade: true
         update_cache: true
+      tags:
+        - security_config
+        - package_updates
+        - never
       register: reboot_required
       notify:
         - Reboot PiKVM
@@ -73,6 +118,10 @@
       community.general.pacman:
         name: "{{ __ansible_pikvm_package_name }}"
         state: latest
+      tags:
+        - baseline_config
+        - package_updates
+        - never
       with_items: "{{ package_list | default([]) }}"
       loop_control:
         loop_var: __ansible_pikvm_package_name
@@ -86,6 +135,10 @@
         src: public.xml.j2
         dest: /etc/firewalld/zones/public.xml
         mode: u+rw,g=r,o=r
+      tags:
+        - baseline_config
+        - security_config
+        - never
       when: firewall_config is defined
       register: firewall_rule
 
@@ -94,12 +147,20 @@
         name: firewalld
         state: started
         enabled: true
+      tags:
+        - baseline_config
+        - security_config
+        - never
       when: firewall_config is defined
       register: firewall_service
 
     # This should only run if the firewall config is changed
     - name: Reload the firewall configuration
       ansible.builtin.command: firewall-cmd --reload
+      tags:
+        - baseline_config
+        - security_config
+        - never
       when:
         - firewall_rule is changed and firewall_service is not changed
       changed_when: true
@@ -114,12 +175,17 @@
     # Attempt to remount the SD card read-only.
     - name: Remount the SD card read-only
       ansible.builtin.command: ro
+      tags:
+        - baseline_config
+        - security_config
+        - package_maintenance
+        - never
       register: remount_task
       changed_when: remount_task.rc != 0
       failed_when: remount_task.rc != 0
 
   rescue:
     # If remounting the SD card fails, reboot PiKVM
-    - name: Reboot PiKVM if remount read-only fails
-      ansible.builtin.meta: clear_host_errors
-      notify: Reboot PiKVM
+    - name: Recovery task to handle SD remount failures
+      ansible.builtin.reboot:
+      register: rebooted

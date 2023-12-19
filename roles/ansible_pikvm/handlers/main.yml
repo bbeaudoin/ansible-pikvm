@@ -3,6 +3,7 @@
 - name: Reboot PiKVM
   ansible.builtin.reboot:
   register: rebooted
+  when: rebooted is undefined
 
 - name: Restart kvmd
   ansible.builtin.systemd:
