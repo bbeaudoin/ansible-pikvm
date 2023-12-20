@@ -3,4 +3,4 @@
   name: Test something somewhere
   remote_user: root
   roles:
-    - ansible_pikvm
+    - pikvm

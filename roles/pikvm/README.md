@@ -1,12 +1,12 @@
-Role Name
+pikvm
 =========
 
-A brief description of the role goes here.
+The pikvm role contains files, templates, and tasks to perform initial installation and configuration tasks as well as maintain both the configuration and security baselines of one or more PiKVM hosts. 
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+The collection community.general is a requirement, this may or may not be installed depending on whether your control host is using ansible or ansible-core. This role has been written and tested with Ansible Core version 2.15.
 
 Role Variables
 --------------

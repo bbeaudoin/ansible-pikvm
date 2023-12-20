@@ -13,15 +13,13 @@ msd_files:
   - https://fw-download-alias1.raspberrypi.com/net_install/boot.img
 
 overrides:
-  kvm_switch:
-    # Name is optional
-    name: Lab Rack 16-port TESmart Switch
-
-    # All four variables are required for tesmart
-    type: tesmart
-    host: 10.0.2.12
-    port: 5000
-    size: 16
+  gpio:
+    switches:
+      - name: Lab Rack 16-port TESmart Switch
+        type: tesmart
+        host: 10.0.2.12
+        port: 5000
+        size: 16
 
     # The button and server labels are optional
     # button_text: Eat Me

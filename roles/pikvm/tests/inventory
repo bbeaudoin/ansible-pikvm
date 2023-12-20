@@ -1,0 +1,81 @@
+# Testing configuration, presently only tests the overrides. Where possible,
+# defaults based on the vendor's documentation is used where possible and
+# the override.yaml template will insert comments when defaults are used.
+#
+# One thing to note, while the TESmart 8-port and 16-port KVM switches may
+# be used with any network-connected PiKVM, the ezCoo is controlled via a
+# serial port connection so works only on Raspberry Pi 4 based PiKVMs or the
+# PiKVM V4 Plus (sorry, ezCoo will neithr work with the Pi Zero 2 W nor will
+# it work with the V4 Mini as neither have a usable USB port for control.
+#
+# I've tested all 5 working KVM switch configurations, two for TESmart with
+# implicit (default) settings and explicit settings, and three for ezCoo
+# with protocol and device implicit and explicit values tested independently
+# as all of the settings used match my devices.
+#
+# Not all possible use cases are tested yet as the ones here are my primary
+# use cases for configuration and customization.
+all:
+  hosts:
+    host1:
+      overrides:
+        gpio:
+          switches:
+            - name: TESmart 16-Port KVM Switch (host1)
+              type: tesmart
+              size: 16
+              # Testing the defaults in the override.yaml on host1
+              # host: 10.0.2.12
+              # port: 5000
+    host2:
+      overrides:
+        gpio:
+          switches:
+            - name: TESmart 8-Port KVM Switch (host2)
+              type: tesmart
+              size: 8
+              # Testing the explicit configuration on host2
+              host: 10.0.2.12
+              port: 5000
+              button_text: Eat Me
+              server_text: Boxen
+    host3:
+      overrides:
+        gpio:
+          switches:
+            - name: ezCoo 4-port USB 3.0 Switch
+              type: ezcoo
+              size: 4
+              # Testing the override.yaml defaults on host3
+              #device: /dev/ttyUSB0
+              #protocol: 2
+    host4:
+      overrides:
+        gpio:
+          switches:
+            - name: ezCoo 2-port USB 3.0 Switch
+              type: ezcoo
+              size: 2
+              device: /dev/ttyUSB0
+              protocol: 1
+            - name: ezCoo 4-port USB 3.0 Switch
+              type: ezcoo
+              size: 4
+              device: /dev/ttyUSB1
+              protocol: 2
+            - name: ezCoo 4-port USB 3.0 Switch
+              type: ezcoo
+              size: 4
+              device: /dev/ttyUSB1
+              protocol: 2
+    host5:
+      overrides:
+        gpio:
+          switches:
+            - name: ezCoo 4-port USB 3.0 Switch
+              type: ezcoo
+              size: 4
+              device: /dev/ttyUSB0
+              protocol: 2
+              button_text: Clicky
+              server_text: MyServer

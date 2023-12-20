@@ -1,3 +1,17 @@
 ---
 # Overrides specific to pikvm5
 ansible_host: 10.0.0.19
+
+overrides:
+  gpio:
+    switches:
+      - name: Pi 4 Cluster, 4-Port ezCoo Switch
+        type: ezcoo
+        size: 4
+        device: /dev/ttyUSB0
+        protocol: 2
+
+    # This switch uses the ezCoo defaults in override.yaml
+    # device: /dev/ttyUSB0
+    # protocol: 1
+

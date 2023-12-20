@@ -1,12 +1,13 @@
 ---
-# tasks file for ansible_pikvm
+# tasks file for pikvm
 - name: Remount read-write to prepare for changes
   ansible.builtin.command: rw
   tags:
-    - override_config
-    - baseline_config
-    - security_config
-    - package_maintenance
+    - install
+    - override
+    - baseline
+    - security
+    - packages
     - never
   register: read_write
   changed_when: false
@@ -17,14 +18,19 @@
       ansible.builtin.hostname:
         name: "{{ hostname | default(inventory_hostname) }}"
       tags:
-        - baseline_config
+        - install
+        - override
+        - baseline
+        - security
+        - packages
         - never
 
     - name: Ensure the timezone is set according to preference
       community.general.timezone:
         name: "{{ timezone }}"
       tags:
-        - baseline_config
+        - install
+        - baseline
         - never
 
     - name: Ensure the default root password is replaced
@@ -32,8 +38,8 @@
         name: root
         password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
       tags:
-        - baseline_config
-        - security_config
+        - install
+        - security
         - never
 
     - name: Ensure the default kvmd admin password is replaced
@@ -42,8 +48,8 @@
         regexp: "^admin:"
         line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
       tags:
-        - baseline_config
-        - security_config
+        - install
+        - security
         - never
       notify:
         - Restart kvmd
@@ -54,7 +60,8 @@
         dest: /etc/sudoers.d/ansible-kvmd
         mode: u=rw,g=r
       tags:
-        - security_config
+        - install
+        - security
         - never
 
     - name: Ensure the rendered override.yaml matches the host
@@ -63,8 +70,9 @@
         dest: /etc/kvmd/override.yaml
         mode: u=rw,g=r
       tags:
-        - baseline_config
-        - override_config
+        - install
+        - baseline
+        - override
         - never
       when: overrides is defined
       notify:
@@ -78,17 +86,10 @@
         dest: /usr/share/snmp/mibs/
         mode: u=rw,g=r
       tags:
-        - baseline_config
+        - install
+        - baseline
         - never
       when: cyberpower_mib is defined
-
-    - name: Combine group and host-specific package lists
-      ansible.builtin.set_fact:
-        package_list: "{{ (group_packages | default([]) + host_packages | default([])) | unique }}"
-      tags:
-        - security_config
-        - package_updates
-        - never
 
     - name: Ensure the mirrorlist is set according to preference
       ansible.builtin.copy:
@@ -96,7 +97,8 @@
         dest: /etc/pacman.d/mirrorlist
         mode: u=rw,g=r
       tags:
-        - baseline_config
+        - install
+        - baseline
         - never
 
     - name: Refresh the package cache and install available updates
@@ -104,8 +106,9 @@
         upgrade: true
         update_cache: true
       tags:
-        - security_config
-        - package_updates
+        - install
+        - security
+        - packages
         - never
       register: reboot_required
       notify:
@@ -116,15 +119,16 @@
 
     - name: Install additional packages from a list of desired packages
       community.general.pacman:
-        name: "{{ __ansible_pikvm_package_name }}"
+        name: "{{ __pikvm_package_name }}"
         state: latest
       tags:
-        - baseline_config
-        - package_updates
+        - install
+        - baseline
+        - packages
         - never
       with_items: "{{ package_list | default([]) }}"
       loop_control:
-        loop_var: __ansible_pikvm_package_name
+        loop_var: __pikvm_package_name
       register: packages
       # While an error installing an optional package may not cause an
       # issue with a reboot, manual intervention may be needed here.
@@ -136,8 +140,9 @@
         dest: /etc/firewalld/zones/public.xml
         mode: u+rw,g=r,o=r
       tags:
-        - baseline_config
-        - security_config
+        - install
+        - baseline
+        - security
         - never
       when: firewall_config is defined
       register: firewall_rule
@@ -148,8 +153,9 @@
         state: started
         enabled: true
       tags:
-        - baseline_config
-        - security_config
+        - install
+        - baseline
+        - security
         - never
       when: firewall_config is defined
       register: firewall_service
@@ -158,8 +164,9 @@
     - name: Reload the firewall configuration
       ansible.builtin.command: firewall-cmd --reload
       tags:
-        - baseline_config
-        - security_config
+        - install
+        - baseline
+        - security
         - never
       when:
         - firewall_rule is changed and firewall_service is not changed
@@ -176,9 +183,11 @@
     - name: Remount the SD card read-only
       ansible.builtin.command: ro
       tags:
-        - baseline_config
-        - security_config
-        - package_maintenance
+        - install
+        - override
+        - baseline
+        - security
+        - packages
         - never
       register: remount_task
       changed_when: remount_task.rc != 0
@@ -189,3 +198,10 @@
     - name: Recovery task to handle SD remount failures
       ansible.builtin.reboot:
       register: rebooted
+      tags:
+        - install
+        - override
+        - baseline
+        - security
+        - packages
+        - never

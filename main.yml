@@ -6,12 +6,13 @@
   tasks:
     - name: Include the role to complete PiKVM configuration
       ansible.builtin.include_role:
-        name: ansible_pikvm
+        name: pikvm
       tags:
-        - override_config
-        - baseline_config
-        - security_config
-        - package_maintenance
+        - install
+        - override
+        - baseline
+        - security
+        - packages
 
 - hosts: localhost
   name: Print options for the user
