@@ -21,4 +21,4 @@
   tasks:
     - name: Make sure the user knows tags control what runs
       ansible.builtin.debug:
-        msg: "Run with '--tags {{ ansible_run_tags }}'. Use 'ansible-playbook --list-tags main.yml' for options."
+        msg: Run with '--tags {{ ansible_run_tags }}'. Use 'ansible-playbook --list-tags main.yml' for options.

@@ -14,4 +14,3 @@ overrides:
     # This switch uses the ezCoo defaults in override.yaml
     # device: /dev/ttyUSB0
     # protocol: 1
-

@@ -6,7 +6,7 @@
   tasks:
     - name: Template override.conf.j2 to override.conf
       ansible.builtin.template:
-        src: ../templates/override.yaml.j2
-        dest: "/tmp/override_{{ inventory_hostname }}.yaml"
+        src: override.yaml.j2
+        dest: /tmp/override_{{ inventory_hostname }}.yaml
         mode: u=rw,g=r,o=r
       delegate_to: localhost
