@@ -18,10 +18,11 @@ password_admin: files/password-admin
 # If needed, override the timezone on a per-host basis using host_vars
 timezone: America/New_York
 
-# All hosts will get the firewalld package installed. If this package should
-# not be installed on any hosts, set `group_packages: {}` in the host_vars.
-group_packages:
+# Redefined as package_list, hosts which wish to use the group-defined
+# packages will need to append to, rather than redefine, the variable.
+package_list:
   - firewalld
+  - yamllint
 
 # This may be overridden on a per-host basis in host_vars.
 firewall_config:

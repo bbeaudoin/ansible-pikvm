@@ -12,7 +12,7 @@
         - override
         - baseline
         - security
-        - packages
+        - package
 
 - hosts: localhost
   name: Print options for the user

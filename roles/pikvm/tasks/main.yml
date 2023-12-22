@@ -7,10 +7,11 @@
     - override
     - baseline
     - security
-    - packages
+    - package
     - never
   register: read_write
   changed_when: false
+  when: not ansible_check_mode
 
 - name: Ensure the SD card is remounted read-only
   block:
@@ -22,7 +23,7 @@
         - override
         - baseline
         - security
-        - packages
+        - package
         - never
 
     - name: Ensure the timezone is set according to preference
@@ -41,6 +42,7 @@
         - install
         - security
         - never
+      diff: false
 
     - name: Ensure the default kvmd admin password is replaced
       ansible.builtin.lineinfile:
@@ -51,14 +53,18 @@
         - install
         - security
         - never
+      diff: false
       notify:
         - Restart kvmd
 
     - name: Add add sudoers to kvmd (will move to inventory later)
       ansible.builtin.copy:
-        content: "kvmd ALL=(root) NOPASSWD: /usr/bin/reboot, /usr/bin/poweroff, /usr/bin/systemctl restart kvmd"
+        content: "kvmd ALL=(root) NOPASSWD: {{ __pikvm_command_name }}"
         dest: /etc/sudoers.d/ansible-kvmd
         mode: u=rw,g=r
+      with_items: "{{ kvmd_commands | default([]) }}"
+      loop_control:
+        loop_var: __pikvm_command_name
       tags:
         - install
         - security
@@ -108,7 +114,7 @@
       tags:
         - install
         - security
-        - packages
+        - package
         - never
       register: reboot_required
       notify:
@@ -124,7 +130,7 @@
       tags:
         - install
         - baseline
-        - packages
+        - package
         - never
       with_items: "{{ package_list | default([]) }}"
       loop_control:
@@ -144,7 +150,7 @@
         - baseline
         - security
         - never
-      when: firewall_config is defined
+      when: firewall_config is defined and package_list is defined and "firewalld" in package_list
       register: firewall_rule
 
     - name: Ensure the firewall service is enabled and started
@@ -157,7 +163,7 @@
         - baseline
         - security
         - never
-      when: firewall_config is defined
+      when: firewall_config is defined and package_list is defined and "firewalld" in package_list
       register: firewall_service
 
     # This should only run if the firewall config is changed
@@ -187,11 +193,12 @@
         - override
         - baseline
         - security
-        - packages
+        - package
         - never
       register: remount_task
       changed_when: remount_task.rc != 0
       failed_when: remount_task.rc != 0
+      when: not ansible_check_mode
 
   rescue:
     # If remounting the SD card fails, reboot PiKVM
@@ -203,5 +210,6 @@
         - override
         - baseline
         - security
-        - packages
+        - package
         - never
+      when: not ansible_check_mode

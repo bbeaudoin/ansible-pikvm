@@ -1,3 +1,4 @@
 ---
 # Overrides specific to pikvm2
 hostname: pikvm2.openhappens.org
+ansible_host: 10.0.2.15
