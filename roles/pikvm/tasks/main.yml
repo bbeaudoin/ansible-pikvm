@@ -20,10 +20,7 @@
         name: "{{ hostname | default(inventory_hostname) }}"
       tags:
         - install
-        - override
         - baseline
-        - security
-        - package
         - never
 
     - name: Ensure the timezone is set according to preference
@@ -57,7 +54,7 @@
       notify:
         - Restart kvmd
 
-    - name: Add add sudoers to kvmd (will move to inventory later)
+    - name: Add add sudoers to kvmd as specified in the group_vars or host_vars
       ansible.builtin.copy:
         content: "kvmd ALL=(root) NOPASSWD: {{ __pikvm_command_name }}"
         dest: /etc/sudoers.d/ansible-kvmd
@@ -77,7 +74,6 @@
         mode: u=rw,g=r
       tags:
         - install
-        - baseline
         - override
         - never
       when: overrides is defined
@@ -93,7 +89,6 @@
         mode: u=rw,g=r
       tags:
         - install
-        - baseline
         - never
       when: cyberpower_mib is defined
 
@@ -104,7 +99,7 @@
         mode: u=rw,g=r
       tags:
         - install
-        - baseline
+        - package
         - never
 
     - name: Refresh the package cache and install available updates
@@ -113,7 +108,6 @@
         update_cache: true
       tags:
         - install
-        - security
         - package
         - never
       register: reboot_required
@@ -129,7 +123,6 @@
         state: latest
       tags:
         - install
-        - baseline
         - package
         - never
       with_items: "{{ package_list | default([]) }}"
@@ -147,7 +140,6 @@
         mode: u+rw,g=r,o=r
       tags:
         - install
-        - baseline
         - security
         - never
       when: firewall_config is defined and package_list is defined and "firewalld" in package_list
@@ -160,7 +152,6 @@
         enabled: true
       tags:
         - install
-        - baseline
         - security
         - never
       when: firewall_config is defined and package_list is defined and "firewalld" in package_list
@@ -171,7 +162,6 @@
       ansible.builtin.command: firewall-cmd --reload
       tags:
         - install
-        - baseline
         - security
         - never
       when:
@@ -191,7 +181,6 @@
       tags:
         - install
         - override
-        - baseline
         - security
         - package
         - never
