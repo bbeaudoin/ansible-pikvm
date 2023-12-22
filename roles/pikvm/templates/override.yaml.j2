@@ -4,75 +4,70 @@
 #
 # Unless there is a `-` before the name, it is a unique key
 
-{% if overrides.janus.stun.host is defined and janus.stun.port is defined -%}
+{% if overrides.janus.stun.host is defined and janus.stun.port is defined %}
 janus:
   stun:
     host: {{ overrides.janus.stun.host }}
     port: {{ overrides.janus.stun.port }}
-{%- endif -%}
-
-{%- if overrides is defined -%}
+{% endif %}
+{% if overrides is defined %}
 kvmd:
-  {% if overrides.mouse_alt is defined -%}
+  {% if overrides.mouse_alt is defined %}
   hid:
-    {% if overrides.mouse_alt is defined -%}
+    {% if overrides.mouse_alt is defined %}
     mouse_alt:
       device: {{ overrides.mouse_alt.device | default("") }}
-    {% endif -%}
-    {% if overrides.mouse is defined -%}
+    {% endif %}
+    {% if overrides.mouse is defined %}
     mouse:
       absolute: {{ overrides.mouse.absolute | default(true) }}
       horizontal_wheel: {{ overrides.mouse.horizontal_wheel | default(false) }}
       absolute_win98_fix: {{ overrides.mouse.absolute_win98_fix | default(false) }}
-    {%- endif %}
-  {%- endif %}
-
-  {%- if overrides.gpio.switches is defined -%}
+    {% endif %}
+  {% endif %}
+  {% if overrides.gpio.switches is defined %}
   gpio:
     drivers:
-      {% for switch in overrides.gpio.switches -%}
-      {% set switch_index = loop.index -%}
-      {{- switch.type -}} {{- switch_index -}}:
+      {% for switch in overrides.gpio.switches %}
+      {% set switch_index = loop.index %}
+      {{ switch.type -}} {{- switch_index -}}:
         type: {{ switch.type }}
-        {% if switch.type == 'tesmart' -%}
-        host: {{ switch.host | default('%-15s # Default for TESmart' % "192.168.1.10") }}
-        port: {{ switch.port | default('%-15d # Default for TESmart' % 5000) }}
-        {% endif -%}
-        {% if switch.type == 'ezcoo' -%}
-        device: {{ switch.device | default('%-15s # Default for ezCoo' % "/dev/ttyUSB0") }}
-        protocol: {{ switch.protocol | default('%-13d # Default for ezCoo' % 2) }}
-      {% endif -%}
-    {%- endfor %}
-
+        {% if switch.type == 'tesmart' %}
+        host: {{ switch.host | default('%15s # Default for TESmart' % "192.168.1.10") }}
+        port: {{ switch.port | default('%15d # Default for TESmart' % 5000) }}
+        {% endif %}
+        {% if switch.type == 'ezcoo' %}
+        device: {{ switch.device | default('%15s # Default for ezCoo' % "/dev/ttyUSB0") }}
+        protocol: {{ switch.protocol | default('%13d # Default for ezCoo' % 2) }}
+      {% endif %}
+    {% endfor %}
     scheme:
-      {% for switch in overrides.gpio.switches -%}
-      {%- set switch_index = loop.index -%}
+      {% for switch in overrides.gpio.switches %}
+      {% set switch_index = loop.index %}
       # Configuration specifies a {{ switch.size -}} -port KVM switch
-      {% for port_number in range(switch.size) -%}
-      {{ switch.type }}{{ switch_index }}_led{{ loop.index }}:
+      {% for port_number in range(switch.size) %}
+      {{ switch.type -}} {{- switch_index -}} _led {{- loop.index }}:
         driver: {{ switch.type -}} {{- switch_index }}
         mode: input
         pin: {{ port_number }}
-      {{ switch.type }}{{ switch_index }}_button{{ loop.index }}:
+      {{ switch.type -}} {{- switch_index -}} _button {{- loop.index }}:
         driver: {{ switch.type -}} {{- switch_index }}
         mode: output
         pin: {{ port_number }}
         switch: false
       {% endfor %}
-    {%- endfor %}
-
+    {% endfor %}
     view:
       table:
-        {% for switch in overrides.gpio.switches -%}
-        {% set switch_index = loop.index -%}
-        {% if switch.name is defined -%}
-        - ["#{{ switch.name | default('KVM Switch %d' % (switch_index + 1)) }}"]
+        {% for switch in overrides.gpio.switches %}
+        {% set switch_index = loop.index %}
+        {% if switch.name is defined %}
+        - ["#{{ switch.name | default('KVM Switch %d' % switch_index) }}"]
         - []
-        {% endif -%}
-
-        {%- for port_number in range(switch.size) -%}
-        - ["#{{ '%d' % (port_number + 1) }}: {{ switch.server_text | default('Server %2d' % loop.index) }}", {{ switch.type }}{{ switch_index }}_led{{ loop.index }}, "{{ switch.type }}{{ switch_index }}_button{{ loop.index }} | {{ switch.button_text | default("Select") }}"]
-        {% endfor -%}
-      {%- endfor %}
-  {%- endif -%}
-{%- endif -%}
+        {% endif %}
+        {% for port_number in range(switch.size) %}
+        - ["#{{ '%d' % (port_number + 1) }}: {{ switch.server_text | default('Server %2d' % loop.index) }}", {{ switch.type -}} {{- switch_index -}} _led {{- loop.index }}, "{{ switch.type -}} {{- switch_index -}} _button {{- loop.index }} | {{ switch.button_text | default("Select") }}"]
+        {% endfor %}
+      {% endfor %}
+  {% endif %}
+{% endif %}

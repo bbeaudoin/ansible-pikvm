@@ -9,4 +9,5 @@
         src: override.yaml.j2
         dest: /tmp/override_{{ inventory_hostname }}.yaml
         mode: u=rw,g=r,o=r
+        lstrip_blocks: true
       delegate_to: localhost
