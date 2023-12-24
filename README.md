@@ -78,16 +78,18 @@ The playbook automates all of the currently supported configuration against one 
 5. Configuration settings specified for PiKVM are never lost, forgotten, or left default when replacing the SD card
 6. Any non-default packages or services can be deployed and maintained on one or more of your installations
 7. You can add or remove customizations automatically by pushing changes to PiKVM's override configuration
-8. Automatically recover from certain errors that can leave your PiKVM vulnerable to power loss damage
+8. Automatically recover from errors that can leave your PiKVM vulnerable to power loss damage
 
 Before writing a playbook, I did very little customizations that I wasn't willing to loose when my SD card became corrupted or unusable due to bad package updates. I was consistently forgetting to switch the SD card to read-only, rewriting and debugging override files, and often had to refer to my own GitHub Gists for configurations I had used in the past because I didn't have a local copy on my control host.
 
 ## What doesn't the playbook do?
-I'm still maintaining my server certificates and keys manually. I can write the tasks to deploy those configurations and restart the services, but I would also like to set up automatic certificate rotation using the ACME protocol that Let's Encrypt and other self-hosted certificate systems, such as Keycloak, support.
+There's a non-exhaustive list of what isn't in the playbooks yet:
 
-Templating the override.yaml is going to be very important to me. With approximately 4 lines of code for 5 host files, I can generate the 800 lines of code needed to configure the four models of switches connected to 5 hosts. With anotehr 34 lines of code (in compact YAML format) I could add all of the hostnames and Wake on Lan as well, something I would estimate to be over 1000 lines of configurations if I was manually maintaining my override.yaml files.
+1. Certificate installation and rotation. I'm doing this manually at the moment
+2. Upload files to the MSD automatically or do anything really with PST.
+3. Tailscale, Janus, OLED, fans, audio, edid, mouse jigglers, etc.
 
-Finally, everything else I might find useful to configure and maintain, such as Tailscale or Janus or OLED displays, fans, audio configuration, EDID, mouse jigglers, additional mouse modes such as adding relative to non-V4 override configurations, even things I haven't found useful or worthwhile to configure becomes a possibility with time and effort devoted to writing and testing automation for those features. Each should be available to configure across all hosts or individually with host-specific configuration.
+Read-write of root is still a requirement of most things so PST doesn't necessarily make sense to me to use yet. Nothing really supports it on PiKVM, if things move there and make sense to do, I'll move it into PST but there's no Ansible module for that, it would all be using `ansible.builtin.command` which is not idempotent.
 
 ## What will this project specifically avoid?
 There are some things I'm specifically avoiding with this playbook for safety and compatibility.
