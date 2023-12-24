@@ -23,6 +23,9 @@ cert_paths:
   - /etc/kvmd/nginx/ssl/server.crt
   - /etc/kvmd/vnc/ssl/server.crt
 
+# Debating this structure. For PiKVM it makes sense to have sections, but for
+# the playbook purpose it doesn't matter that "switches" go under "kvmd.gpio",
+# that logic is in the template for the final rendered override.yaml.
 overrides:
   gpio:
     switches:
