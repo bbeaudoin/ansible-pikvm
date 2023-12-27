@@ -1,16 +1,18 @@
-# Ansible Playbook to secure and configure PiKVM
+# Ansible Playbook / Role to configure and secure PiKVM
 ## Introduction
-As someone who uses immutable infrastructure, declarative GitOps, infrastructure as code, and values automation to set, maintain, and secure my IoT (Internet of Things) devices with a lot of PiKVM hosts to manage, I decided to write and maintain a set of playbooks and extend them for others to use as well.
+I've been using immutable infrastructure, infrastructure as code, and declarative GitOps. There's of value to using automation to set, maintain, and secure my IoT (Internet of Things) so I decided to write and maintain a playbook and a set of tasks to manage my PiKVM hosts.
+
+Automation tends to be brittle when considering a small number of use cases so I've decided to extend the tasks to handle other's use cases as well.
 
 ## Disclaimers
-_**These playbooks are provided as-is, without warranty. Please read the information here and be sure you understand the risks before using.**_
+_**The playbook, role, tasks, and instructions are provided as-is, without warranty. Please read the information here and be sure you understand the risks before using.**_
 
-I'm just a user. I'm employed in the IT industry and a health sciences student at my local university. I am neither affiliated with PiKVM nor do they endorse this project. My employer permits me to contribute my own code to the community, this code is not my employer's code nor do they support or endorse this project in any way. My opinions are my own and do not reflect those of my employer, my school, nor the PiKVM project.
+Though I presently am working in technology, I'm just a PiKVM user and student. I am neither affiliated with PiKVM nor do they endorse this project. My employer permits me to contribute my own code to the community, this code is not my employer's code nor do they support or endorse this project in any way. My opinions are my own and do not reflect those of my employer, my school, nor the PiKVM project.
 
-Please note I do not provide support for PiKVM, if you need help from the community please see the documentation at https://docs.pikvm.org/, I will not respond to general questions. I will do my best to help with the playbooks, however, as time permits.
+I will support the playbooks and tasks, as time permits. Please refer to either the PiKVM documentation at https://docs.pikvm.org/ or the Ansible documentation at https://docs.ansible.com/ and reach out to those communities if you need support for PiKVM and/or Ansible rather than through this project.
 
-# Using the playbook (Quick Start)
-This project is about a week old, my Ansible skills have gotten rusty, there have been lots of changes to Ansible over the past 18 months, and I have to make things work as best as I can with the upstream project in a way that makes sense, both to me and to the PiKVM installations I'm working with. That said much of what is already defined shouldn't change without good reason but any variables in group or host vars that aren't used may never be used or may not have the same format once I start writing the tasks to use them. The `override*.yaml` files will definitely be going away in the future though.
+# Quick Start
+Clone the repo to a Linux or macOS host. If you are using Windows, Linux can be downloaded from the Microsoft Store. You will need to install Ansible along with the community collection. Review the code and create appropriate host files, the examples under `./inventory/host_vars/` hold the definitions of my own PiKVM installations. The inventory can be static or dynamic, a script for dynamic inventory has been included based on the `host_vars`.
 
 ## Warning (Important Note)
 Although this project does not make any firmware changes, persisting changes only to the SD card, it is possible that the code or pre-existing software or physical state of the SD card (damage, corruption, etc.) when used with this playbook or the configuration can leave your PiKVM OS inaccessible or in worse state.
@@ -51,6 +53,31 @@ If you have used both Git and Ansible before and are familiar with the directory
 19. After ensuring the dry-run completes successfully, you can use `ansible-playbook main.yml`.
 
 As the playbook and templates, even the configuration variables and formats or task lists aren't final, I haven't gone into too much detail. It is likely any changes you make locally will conflict with my changes so you may not be able to use `git pull` to download the latest updates and your configuration files may not be compatible with future changes to the playbook.
+
+## Examples
+
+### Check if any of the security configurations are not applied to any host
+
+```
+ansible-playbook main.yml --tags security --check
+```
+
+### Perform all (install) tasks on a specific PiKVM host in the inventory
+
+```
+ansible-playbook main.yml --tags install --host_list=pikvm8
+```
+
+### Configure the kvmd override.yaml for two specific PiKVM hosts in the inventory
+
+```
+ansible-playbook main.yml --tags override --host_list=pikvm1,pikvm3
+```
+
+### Ensure all packages are updated on a specific host (requires reboot).
+```
+ansible-playbook main.yml --tags packages --host_list=pikvm4
+```
 
 # Questions and Answers
 It would be a misnomer to call this a "Frequently Asked Questions" section because nobody has really asked any questions yet. Moreso they are critical of the effort to standardize and automate configuration with one person saying I'm creating a "snowflake". That's certainly not the goal of consistent automation. I'll also most certainly change if there are upstream changes that make sense or become necessary.
