@@ -25,11 +25,12 @@ kvmd:
       absolute_win98_fix: {{ overrides.mouse.absolute_win98_fix | default(false) }}
     {% endif %}
   {% endif %}
-  {% if overrides.gpio.switches is defined %}
+  {% if overrides.gpio is defined %}
   gpio:
     drivers:
-      {% for switch in overrides.gpio.switches %}
-      {%   set switch_index = loop.index %}
+      {% if overrides.gpio.switches is defined %}
+      {%   for switch in overrides.gpio.switches %}
+      {%     set switch_index = loop.index %}
       {{ switch.type -}} {{- switch_index -}} :
         type: {{ switch.type }}
         {% if switch.type == 'tesmart' %}
@@ -39,21 +40,34 @@ kvmd:
         {% if switch.type == 'ezcoo' %}
         device: {{ switch.device | default('%15s # Default for ezCoo' % "/dev/ttyUSB0") }}
         protocol: {{ switch.protocol | default('%13d # Default for ezCoo' % 2) }}
-      {%   endif %}
-      {%   if switch.machines is defined %}
-      {%     for machines in switch.machines %}
-      {%       set machine_index = loop.index %}
-      {%       if machines["macaddrs"] is defined %}
-      {%         for address in machines["macaddrs"] %}
+      {%     endif %}
+      {%     if switch.machines is defined %}
+      {%       for machines in switch.machines %}
+      {%         set machine_index = loop.index %}
+      {%         if machines["macaddrs"] is defined %}
+      {%           for address in machines["macaddrs"] %}
       {{ switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index -}} :
         type: wol
         mac: {{ address }}
-      {%         endfor %}
-      {%       endif %}
-      {%     endfor %}
-      {%   endif %}
-      {% endfor %}
+      {%           endfor %}
+      {%         endif %}
+      {%       endfor %}
+      {%     endif %}
+      {%   endfor %}
+      {% endif %}
+      {% if overrides.gpio.commands is defined %}
+      {%   for command in overrides.gpio.commands %}
+      # Driver for {{ command.name }}
+      command {{- loop.index }}:
+        type: cmd
+        cmd: {{ command.command }}
+      {%   endfor %}
+      {% endif %}
     scheme:
+      pikvm_led:
+        pin: 0
+        mode: input
+      {% if overrides.gpio.switches is defined %}
       {% for switch in overrides.gpio.switches %}
       {% set switch_index = loop.index %}
       # Configuration specifies a {{ switch.size -}} -port KVM switch
@@ -82,27 +96,48 @@ kvmd:
       {%       endif %}
       {%     endfor %}
       {%   endif %}
-    {% endfor %}
+      {% endfor %}
+      {% endif %}
+      {% if overrides.gpio.commands is defined %}
+      {%   for command in overrides.gpio.commands %}
+      # Scheme for {{ command.name }}
+      command {{- loop.index -}} _button:
+        driver: command {{- loop.index }}
+        pin: 0
+        mode: output
+        switch: false
+      {%   endfor %}
+      {% endif %}
     view:
       table:
-        {% for switch in overrides.gpio.switches %}
-        {%   set switch_index = loop.index %}
-        {%     if switch.hostname is defined %}
+        {% if overrides.gpio.switches is defined %}
+        {%   for switch in overrides.gpio.switches %}
+        {%     set switch_index = loop.index %}
+        {%       if switch.hostname is defined %}
         - ["#{{ switch.hostname | default('KVM Switch %d' % switch_index) }}"]
         - []
-        {%     endif %}
-        {%     for port_number in range(switch.size) %}
-        {%       if switch.machines is defined and switch.machines[loop.index0] is defined %}
-        {%         set machine = switch.machines[loop.index0] %}
         {%       endif %}
+        {%       for port_number in range(switch.size) %}
+        {%         if switch.machines is defined and switch.machines[loop.index0] is defined %}
+        {%           set machine = switch.machines[loop.index0] %}
         - ["#{{ loop.index }}: {{ machine["hostname"] | default('Server %2d' % loop.index) }}", {{ switch.type -}} {{- switch_index -}} _led {{- loop.index }}, "{{ switch.type -}} {{- switch_index -}} _button {{- loop.index }} | {{ switch.button_text | default("Select") }}"
-        {%-      if machine["macaddrs"] is defined %}
-        {%         set machine_index = loop.index %}
-        {%          for address in machine["macaddrs"] %},
+        {%-          if machine["macaddrs"] is defined %}
+        {%             set machine_index = loop.index %}
+        {%             for address in machine["macaddrs"] %},
            "{{- switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index -}} | WoL {{ loop.index }}"
-        {%-       endfor -%}
-        {%-      endif %}]
-        {%    endfor %}
-      {% endfor %}
+        {%-            endfor -%}
+        {%-          endif %}]
+        {%         endif %}
+        {%       endfor %}
+        {%   endfor %}
+        {% endif %}
+        {% if overrides.gpio.commands is defined %}
+        - ["# Local ({{ inventory_hostname }}) Commands"]
+        - []
+        - ["#PiKVM", "pikvm_led|green"
+        {%-   for command in overrides.gpio.commands %},
+           "command {{- loop.index -}} _button {%- if command.confirm is true -%} |confirm {%- endif -%} | {{- command.name }}"
+        {%-  endfor %}]
+        {% endif %}
   {% endif %}
 {% endif %}

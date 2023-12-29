@@ -21,6 +21,13 @@ all:
     host1:
       overrides:
         gpio:
+          commands:
+            - name: Reboot
+              command: [/usr/bin/sudo, /usr/bin/reboot]
+            - name: Power Off
+              command: [/usr/bin/sudo, /usr/bin/poweroff]
+            - name: Reset kvmd
+              command: [/usr/bin/sudo, /usr/bin/systemctl, restart, kvmd]
           switches:
             - name: TESmart 16-Port KVM Switch (host1)
               type: tesmart

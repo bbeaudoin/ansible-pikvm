@@ -9,11 +9,6 @@ package_list:
   - rpi4-eeprom
   - net-snmp
 
-kvmd_commands:
-  - /usr/bin/reboot
-  - /usr/bin/poweroff
-  - /usr/bin/systemctl restart kvmd
-
 # Presently unused, plan to use the API to add files, if possible
 msd_files:
   - https://fw-download-alias1.raspberrypi.com/net_install/boot.img
@@ -28,6 +23,15 @@ cert_paths:
 # that logic is in the template for the final rendered override.yaml.
 overrides:
   gpio:
+    commands:
+      - name: Restart kvmd
+        command: [/usr/bin/sudo, /usr/bin/systemctl, restart, kvmd]
+        confirm: true
+      - name: Reboot
+        command: [/usr/bin/sudo, /usr/bin/reboot]
+        confirm: true
+      - name: Test
+        command: [/usr/bin/test, test2, ==, test3]
     switches:
       - hostname: Lab Rack 16-port TESmart Switch
         type: tesmart
