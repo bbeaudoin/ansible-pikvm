@@ -43,8 +43,8 @@ kvmd:
       {%   if switch.machines is defined %}
       {%     for machines in switch.machines %}
       {%       set machine_index = loop.index %}
-      {%       if machines["wol"] is defined %}
-      {%         for address in machines["wol"] %}
+      {%       if machines["macaddrs"] is defined %}
+      {%         for address in machines["macaddrs"] %}
       {{ switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index -}} :
         type: wol
         mac: {{ address }}
@@ -71,8 +71,8 @@ kvmd:
       {%   if switch.machines is defined %}
       {%     for machines in switch.machines %}
       {%       set machine_index = loop.index %}
-      {%       if machines["wol"] is defined %}
-      {%         for address in machines["wol"] %}
+      {%       if machines["macaddrs"] is defined %}
+      {%         for address in machines["macaddrs"] %}
       {{ switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index -}} :
         driver: {{ switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index }}
         pin: 0
@@ -87,18 +87,18 @@ kvmd:
       table:
         {% for switch in overrides.gpio.switches %}
         {%   set switch_index = loop.index %}
-        {%     if switch.name is defined %}
-        - ["#{{ switch.name | default('KVM Switch %d' % switch_index) }}"]
+        {%     if switch.hostname is defined %}
+        - ["#{{ switch.hostname | default('KVM Switch %d' % switch_index) }}"]
         - []
         {%     endif %}
         {%     for port_number in range(switch.size) %}
         {%       if switch.machines is defined and switch.machines[loop.index0] is defined %}
-        {%         set switch_member = switch.machines[loop.index0] %}
+        {%         set machine = switch.machines[loop.index0] %}
         {%       endif %}
-        - ["#{{ loop.index }}: {{ switch_member["name"] | default('Server %2d' % loop.index) }}", {{ switch.type -}} {{- switch_index -}} _led {{- loop.index }}, "{{ switch.type -}} {{- switch_index -}} _button {{- loop.index }} | {{ switch.button_text | default("Select") }}"
-        {%-      if switch_member["wol"] is defined %}
+        - ["#{{ loop.index }}: {{ machine["hostname"] | default('Server %2d' % loop.index) }}", {{ switch.type -}} {{- switch_index -}} _led {{- loop.index }}, "{{ switch.type -}} {{- switch_index -}} _button {{- loop.index }} | {{ switch.button_text | default("Select") }}"
+        {%-      if machine["macaddrs"] is defined %}
         {%         set machine_index = loop.index %}
-        {%          for address in switch_member["wol"] %},
+        {%          for address in machine["macaddrs"] %},
            "{{- switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index -}} | WoL {{ loop.index }}"
         {%-       endfor -%}
         {%-      endif %}]

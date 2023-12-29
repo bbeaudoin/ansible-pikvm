@@ -65,18 +65,18 @@ ansible-playbook main.yml --tags security --check
 ### Perform all (install) tasks on a specific PiKVM host in the inventory
 
 ```
-ansible-playbook main.yml --tags install --host_list=pikvm8
+ansible-playbook main.yml --tags install --extra-vars host_list=pikvm8
 ```
 
 ### Configure the kvmd override.yaml for two specific PiKVM hosts in the inventory
 
 ```
-ansible-playbook main.yml --tags override --host_list=pikvm1,pikvm3
+ansible-playbook main.yml --tags override --extra-vars host_list=pikvm1,pikvm3
 ```
 
 ### Ensure all packages are updated on a specific host (requires reboot).
 ```
-ansible-playbook main.yml --tags packages --host_list=pikvm4
+ansible-playbook main.yml --tags packages --extra-vars host_list=pikvm4
 ```
 
 # Questions and Answers

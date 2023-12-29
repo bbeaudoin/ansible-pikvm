@@ -29,16 +29,40 @@ all:
               # host: 10.0.2.12
               # port: 5000
               machines:
-                - { name: NUC8i7HVK, wol: ["54:b2:03:89:5b:87", "54:b2:03:89:5b:88"]}
-                - { name: NUC8i7HVK, wol: ["54:b2:03:04:81:bb", "54:b2:03:04:81:bc"]}
-                - { name: NUC8i7HVK, wol: ["54:b2:03:18:b1:48", "54:b2:03:18:b1:49"]}
-                - { name: NUC8i7HVK, wol: ["54:b2:03:8c:ea:f4", "54:b2:03:8c:ea:f5"]}
-                - { name: NUC8i7HVK, wol: ["54:b2:03:18:ac:be", "54:b2:03:18:ac:bf"]}
-                - { name: NUC8i7HVK, wol: ["54:b2:03:8d:4c:e9", "54:b2:03:8d:4c:ea"]}
-                - { name: NUC10i7FNH, wol: ["1c:69:7a:69:07:71"]}
-                - { name: NUC10i7FNH, wol: ["1c:69:7a:0e:5d:89"]}
-                - {}
-                - { name: NUC10i7FNH, wol: ["1c:69:7a:0e:5d:85"]}
+                - hostname: NUC8i7HVK
+                  macaddrs:
+                    - 54:b2:03:04:81:bb
+                    - 54:b2:03:04:81:bc
+                - hostname: NUC8i7HVK
+                  macaddrs:
+                    - 54:b2:03:18:b1:48
+                    - 54:b2:03:18:b1:49
+                - hostname: NUC8i7HVK
+                  macaddrs:
+                    - 54:b2:03:8d:4c:e9
+                    - 54:b2:03:8d:4c:ea
+                - hostname: NUC8i7HVK
+                  macaddrs:
+                    - 54:b2:03:89:5b:87
+                    - 54:b2:03:89:5b:88
+                - hostname: NUC8i7HVK
+                  macaddrs:
+                    - 54:b2:03:8c:ea:f4
+                    - 54:b2:03:8c:ea:f5
+                - hostname: NUC8i7HVK
+                  macaddrs:
+                    - 54:b2:03:18:ac:be
+                    - 54:b2:03:18:ac:bf
+                - hostname: NUC10i7FNH
+                  macaddrs:
+                    - 1c:69:7a:69:07:71
+                - hostname: NUC10i7FNH
+                  macaddrs:
+                    - 1c:69:7a:0e:5d:89
+                - {} # Indicates an empty slot
+                - hostname: NUC10i7FNH
+                  macaddrs:
+                    - 1c:69:7a:0e:5d:85
     host2:
       overrides:
         gpio:
