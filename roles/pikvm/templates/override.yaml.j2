@@ -113,29 +113,29 @@ kvmd:
         {% if overrides.gpio.switches is defined %}
         {%   for switch in overrides.gpio.switches %}
         {%     set switch_index = loop.index %}
-        {%       if switch.hostname is defined %}
+        {%     if switch.hostname is defined %}
         - ["#{{ switch.hostname | default('KVM Switch %d' % switch_index) }}"]
         - []
+        {%     endif %}
+        {%     for port_number in range(switch.size) %}
+        {%       if switch.machines is defined and switch.machines[loop.index0] is defined %}
+        {%         set machine = switch.machines[loop.index0] %}
         {%       endif %}
-        {%       for port_number in range(switch.size) %}
-        {%         if switch.machines is defined and switch.machines[loop.index0] is defined %}
-        {%           set machine = switch.machines[loop.index0] %}
         - ["#{{ loop.index }}: {{ machine["hostname"] | default('Server %2d' % loop.index) }}", {{ switch.type -}} {{- switch_index -}} _led {{- loop.index }}, "{{ switch.type -}} {{- switch_index -}} _button {{- loop.index }} | {{ switch.button_text | default("Select") }}"
-        {%-          if machine["macaddrs"] is defined %}
-        {%             set machine_index = loop.index %}
-        {%             for address in machine["macaddrs"] %},
+        {%-      if machine["macaddrs"] is defined %}
+        {%         set machine_index = loop.index %}
+        {%         for address in machine["macaddrs"] %},
            "{{- switch.type -}} {{- switch_index -}} _wol {{- machine_index -}} _if {{- loop.index -}} | WoL {{ loop.index }}"
-        {%-            endfor -%}
-        {%-          endif %}]
-        {%         endif %}
-        {%       endfor %}
+        {%-        endfor -%}
+        {%-      endif %}]
+        {%     endfor %}
         {%   endfor %}
         {% endif %}
         {% if overrides.gpio.commands is defined %}
         - ["# Local ({{ inventory_hostname }}) Commands"]
         - []
         - ["#PiKVM", "pikvm_led|green"
-        {%-   for command in overrides.gpio.commands %},
+        {%-  for command in overrides.gpio.commands %},
            "command {{- loop.index -}} _button {%- if command.confirm is true -%} |confirm {%- endif -%} | {{- command.name }}"
         {%-  endfor %}]
         {% endif %}
