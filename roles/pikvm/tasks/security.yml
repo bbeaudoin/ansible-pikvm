@@ -1,0 +1,53 @@
+---
+- name: Ensure the default root password is replaced
+  ansible.builtin.user:
+    name: root
+    password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
+  tags:
+    - install
+    - security
+  diff: false
+
+- name: Ensure the default kvmd admin password is replaced
+  ansible.builtin.lineinfile:
+    path: /etc/kvmd/htpasswd
+    regexp: "^admin:"
+    line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
+  tags:
+    - install
+    - security
+  diff: false
+  notify:
+    - Restart kvmd
+
+- name: Ensure the firewall rules are set as defined in the host vars
+  ansible.builtin.template:
+    src: public.xml.j2
+    dest: /etc/firewalld/zones/public.xml
+    mode: u+rw,g=r,o=r
+  tags:
+    - install
+    - security
+  when: firewall_config is defined and package_list is defined and "firewalld" in package_list
+  register: firewall_rule
+
+- name: Ensure the firewall service is enabled and started
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+  tags:
+    - install
+    - security
+  when: firewall_config is defined and package_list is defined and "firewalld" in package_list
+  register: firewall_service
+
+# This should only run if the firewall config is changed
+- name: Reload the firewall configuration
+  ansible.builtin.command: firewall-cmd --reload
+  tags:
+    - install
+    - security
+  when:
+    - firewall_rule is changed and firewall_service is not changed
+  changed_when: true

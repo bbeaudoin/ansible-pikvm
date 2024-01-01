@@ -1,0 +1,25 @@
+---
+# Sets the PiKVM hostname (default: inventory_hostname)
+- name: Ensure the hostname is set according to preference
+  ansible.builtin.hostname:
+    name: "{{ hostname | default(inventory_hostname) }}"
+  tags:
+    - install
+
+# Sets the PiKVM timezone (default: 
+- name: Ensure the timezone is set according to preference
+  community.general.timezone:
+    name: "{{ timezone | default('America/New_York') }}"
+  tags:
+    - install
+
+# Download the latest CyberPower MIB from the CyberPower website:
+# https://www.cyberpowersystems.com/products/software/mib-files/
+- name: Install the CyberPower MIB for CyberPower ATS and PDU support
+  ansible.builtin.copy:
+    src: "{{ __pikvm_mib }}"
+    dest: /usr/share/snmp/mibs/
+    mode: u=rw,g=r
+  tags:
+    - install
+  when: snmp_mib_list is defined

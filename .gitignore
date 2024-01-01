@@ -5,3 +5,4 @@
 ansible-navigator.log
 main-artifact*.json
 **context/
+galaxy_token

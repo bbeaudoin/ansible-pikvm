@@ -5,7 +5,6 @@
   tags:
     - install
     - override
-    - baseline
     - security
     - package
     - never
@@ -15,46 +14,14 @@
 
 - name: Ensure the SD card is remounted read-only
   block:
-    - name: Ensure the hostname is set according to preference
-      ansible.builtin.hostname:
-        name: "{{ hostname | default(inventory_hostname) }}"
+    - name: Include install tasks when indicated by the tags
+      ansible.builtin.include_tasks:
+        file: install.yml
       tags:
         - install
-        - baseline
         - never
 
-    - name: Ensure the timezone is set according to preference
-      community.general.timezone:
-        name: "{{ timezone }}"
-      tags:
-        - install
-        - baseline
-        - never
-
-    - name: Ensure the default root password is replaced
-      ansible.builtin.user:
-        name: root
-        password: "{{ lookup('ansible.builtin.password', password_root, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='sha512_crypt') }}"
-      tags:
-        - install
-        - security
-        - never
-      diff: false
-
-    - name: Ensure the default kvmd admin password is replaced
-      ansible.builtin.lineinfile:
-        path: /etc/kvmd/htpasswd
-        regexp: "^admin:"
-        line: admin:{{ lookup('ansible.builtin.password', password_admin, chars=['ascii_letters', 'digits', 'punctuation'], encrypt='bcrypt') }}
-      tags:
-        - install
-        - security
-        - never
-      diff: false
-      notify:
-        - Restart kvmd
-
-    - name: Include override tasks when --tags contains install, override, or security
+    - name: Include override tasks when indicated by the tags
       ansible.builtin.include_tasks:
         file: override.yml
       tags:
@@ -63,102 +30,28 @@
         - security
         - never
 
-    # Download the latest CyberPower MIB from the CyberPower website:
-    # https://www.cyberpowersystems.com/products/software/mib-files/
-    - name: Install the CyberPower MIB for CyberPower ATS and PDU support
-      ansible.builtin.copy:
-        src: cyberpower_mib
-        dest: /usr/share/snmp/mibs/
-        mode: u=rw,g=r
-      tags:
-        - install
-        - never
-      when: cyberpower_mib is defined
-
-    - name: Ensure the mirrorlist is set according to preference
-      ansible.builtin.copy:
-        src: mirrorlist
-        dest: /etc/pacman.d/mirrorlist
-        mode: u=rw,g=r
+    - name: Include package tasks when indicated by the tags
+      ansible.builtin.include_tasks:
+        file: package.yml
       tags:
         - install
         - package
         - never
 
-    - name: Refresh the package cache and install available updates
-      community.general.pacman:
-        upgrade: true
-        update_cache: true
-      tags:
-        - install
-        - package
-        - never
-      register: reboot_required
-      notify:
-        - Reboot PiKVM
-      # Note, the error "could not update package db" indicates a mirror
-      # could not be reached. Other errors may need manual intervention.
-      ignore_errors: true
-
-    - name: Install additional packages from a list of desired packages
-      community.general.pacman:
-        name: "{{ __pikvm_package_name }}"
-        state: latest
-      tags:
-        - install
-        - package
-        - never
-      with_items: "{{ package_list | default([]) }}"
-      loop_control:
-        loop_var: __pikvm_package_name
-      register: packages
-      # While an error installing an optional package may not cause an
-      # issue with a reboot, manual intervention may be needed here.
-      ignore_errors: true
-
-    - name: Ensure the firewall rules are set as defined in the host vars
-      ansible.builtin.template:
-        src: public.xml.j2
-        dest: /etc/firewalld/zones/public.xml
-        mode: u+rw,g=r,o=r
+    - name: Include security tasks when indicated by the tags
+      ansible.builtin.include_tasks:
+        file: security.yml
       tags:
         - install
         - security
         - never
-      when: firewall_config is defined and package_list is defined and "firewalld" in package_list
-      register: firewall_rule
-
-    - name: Ensure the firewall service is enabled and started
-      ansible.builtin.systemd:
-        name: firewalld
-        state: started
-        enabled: true
-      tags:
-        - install
-        - security
-        - never
-      when: firewall_config is defined and package_list is defined and "firewalld" in package_list
-      register: firewall_service
-
-    # This should only run if the firewall config is changed
-    - name: Reload the firewall configuration
-      ansible.builtin.command: firewall-cmd --reload
-      tags:
-        - install
-        - security
-        - never
-      when:
-        - firewall_rule is changed and firewall_service is not changed
-      changed_when: true
 
   rescue:
-    # If remounting the SD card fails, reboot PiKVM
-    - name: Bring failed hosts back to play
+    - name: Bring failed hosts back into play to remount SD card
       ansible.builtin.meta: clear_host_errors
 
-- name: Ensure the SD card is remounted read-only
+- name: Ensure the SD card is remounted read-only to protect the SD card
   block:
-    # Attempt to remount the SD card read-only.
     - name: Remount the SD card read-only
       ansible.builtin.command: ro
       tags:
@@ -173,14 +66,12 @@
       when: not ansible_check_mode
 
   rescue:
-    # If remounting the SD card fails, reboot PiKVM
-    - name: Recovery task to handle SD remount failures
+    - name: Recover from failure to remount by rebooting failed hosts
       ansible.builtin.reboot:
       register: rebooted
       tags:
         - install
         - override
-        - baseline
         - security
         - package
         - never

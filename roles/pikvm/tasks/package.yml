@@ -1,0 +1,40 @@
+---
+- name: Ensure the mirrorlist is set according to preference
+  ansible.builtin.copy:
+    src: mirrorlist
+    dest: /etc/pacman.d/mirrorlist
+    mode: u=rw,g=r
+  tags:
+    - install
+    - package
+
+# Note, there are many potential causes for package updates from a bad SD
+# card to Internet access issues when updating the package cache. Ignoring
+# errors so the playbook will continue, investigate manually.
+- name: Refresh the package cache and install available updates
+  community.general.pacman:
+    upgrade: true
+    update_cache: true
+  tags:
+    - install
+    - package
+  register: reboot_required
+  notify:
+    - Reboot PiKVM
+  ignore_errors: true
+
+# Note, there are many potential causes for package updates from a bad SD
+# card to Internet access issues when updating the package cache. Ignoring
+# errors so the playbook will continue, investigate manually.
+- name: Install additional packages from a list of desired packages
+  community.general.pacman:
+    name: "{{ __pikvm_package_name }}"
+    state: latest
+  tags:
+    - install
+    - package
+  with_items: "{{ package_list | default([]) }}"
+  loop_control:
+    loop_var: __pikvm_package_name
+  register: packages
+  ignore_errors: true
