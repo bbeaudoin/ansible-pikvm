@@ -2,3 +2,6 @@
 *passwd*
 *password*
 *.key
+ansible-navigator.log
+main-artifact*.json
+**context/

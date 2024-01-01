@@ -1,0 +1,46 @@
+---
+- name: Define sudoers command based on kvmd command buttons
+  ansible.builtin.set_fact:
+    sudo_commands: "{{ sudo_commands | default([]) + [__pikvm_commands.command[1:] | join(' ')] }}"
+  with_items: "{{ overrides.gpio.commands | default([]) }}"
+  loop_control:
+    loop_var: __pikvm_commands
+  when: overrides.gpio.commands is defined and __pikvm_commands.command[0] is search("sudo")
+  tags:
+    - install
+    - override
+    - security
+
+- name: Add add sudoers to kvmd as specified in the group_vars or host_vars
+  ansible.builtin.copy:
+    content: "kvmd ALL=(root) NOPASSWD: {{ sudo_commands | join(', ') }}"
+    dest: /etc/sudoers.d/ansible-kvmd
+    mode: u=rw,g=r
+  when: sudo_commands is defined
+  tags:
+    - install
+    - override
+    - security
+
+- name: Remove sudoers if no commands are specified
+  ansible.builtin.file:
+    path: /etc/sudoers.d/ansible-kvmd
+    state: absent
+  when: sudo_commands is not defined
+  tags:
+    - install
+    - override
+    - security
+
+- name: Ensure the rendered override.yaml matches the host
+  ansible.builtin.template:
+    src: override.yaml.j2
+    dest: /etc/kvmd/override.yaml
+    mode: u=rw,g=r
+    lstrip_blocks: true
+  when: overrides is defined
+  notify:
+    - Restart kvmd
+  tags:
+    - install
+    - override
