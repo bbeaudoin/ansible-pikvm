@@ -25,6 +25,7 @@
     src: public.xml.j2
     dest: /etc/firewalld/zones/public.xml
     mode: u+rw,g=r,o=r
+    lstrip_blocks: true
   tags:
     - install
     - security

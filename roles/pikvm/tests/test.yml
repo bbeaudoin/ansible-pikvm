@@ -1,6 +1,28 @@
 ---
-- hosts: localhost
-  name: Test something somewhere
-  remote_user: root
-  roles:
-    - pikvm
+# Test playbook for the template generation based on the test inventory.
+- name: Test generation of different override.yaml with different host_vars
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Template override.conf.j2 to override.conf
+      ansible.builtin.template:
+        src: override.yaml.j2
+        dest: /tmp/override_{{ inventory_hostname }}.yaml
+        mode: u=rw,g=r,o=r
+        lstrip_blocks: true
+      delegate_to: localhost
+      tags:
+        - override
+        - never
+
+    - name: Template override.conf.j2 to override.conf
+      ansible.builtin.template:
+        src: public.xml.j2
+        dest: /tmp/public_{{ inventory_hostname }}.xml
+        mode: u=rw,g=r,o=r
+        lstrip_blocks: true
+      delegate_to: localhost
+      tags:
+        - security
+        - never
+      when: firewall_config is defined

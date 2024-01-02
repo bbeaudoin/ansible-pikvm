@@ -2,11 +2,26 @@
 <zone>
   <short>Public</short>
   <description>For use in public areas. You do not trust the other computers on networks to not harm your computer. Only selected incoming connections are accepted.</description>
+  {# Recommend not customizing required services #}
   <service name="ssh"/>
   <service name="dhcpv6-client"/>
   <service name="http"/>
   <service name="https"/>
-  <service name="dns"/>
+  {# Required for WebRTC and Janus #}
   <port port="20000-40000" protocol="udp"/>
+  {% if firewall_config["services"] is defined %}
+  {%   for service in firewall_config["services"] %}
+  <service name="{{ service }}"/>
+  {%   endfor %}
+  {% endif %}
+  {% if firewall_config["protocols"] is defined %}
+  {%   for protocol, ports in firewall_config["protocols"].items() %}
+  {%     if ports | length > 0 %}
+  {%       for port in ports %}
+  <port port="{{ port }}" protocol="{{ protocol }}"/>
+  {%       endfor %}
+  {%     endif %}
+  {%   endfor %}
+  {% endif %}
   <forward/>
 </zone>

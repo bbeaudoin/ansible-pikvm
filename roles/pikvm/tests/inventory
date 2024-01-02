@@ -19,6 +19,17 @@
 all:
   hosts:
     host1:
+      firewall_config:
+        services:
+          # Defined as an array
+          - http3
+        protocols: {}
+          # Defined as an array
+          tcp: []
+          udp: []
+          # Defined as a list
+          #  - 20000-40000
+
       overrides:
         gpio:
           commands:
