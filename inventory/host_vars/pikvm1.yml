@@ -23,6 +23,7 @@ cert_paths:
 # that logic is in the template for the final rendered override.yaml.
 overrides:
   gpio:
+    title: KVM Switch
     commands:
       - name: Restart kvmd
         command: [/usr/bin/sudo, /usr/bin/systemctl, restart, kvmd]

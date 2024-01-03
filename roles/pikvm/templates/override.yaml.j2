@@ -109,6 +109,8 @@ kvmd:
       {%   endfor %}
       {% endif %}
     view:
+      header:
+        title: {{ overrides.gpio.title | default("Functions") }}
       table:
         {% if overrides.gpio.switches is defined %}
         {%   for switch in overrides.gpio.switches %}
